@@ -36,12 +36,13 @@ local function isSafePosition(player, position)
 end
 
 -- The wave wall: a huge translucent wall of water that sweeps the belt
--- from the volcano end to the lagoon end, washing the belt clean.
+-- from the volcano end to the lagoon end, washing the belt clean. Its
+-- path comes from Config.Belt, the same numbers the belt itself uses.
 function WaveServer.runWaveWall()
 	local wall = Instance.new("Part")
 	wall.Name = "TsunamiWall"
 	wall.Size = Vector3.new(6, 30, 60)
-	wall.Position = Vector3.new(-95, 12, 0)
+	wall.Position = Vector3.new(Config.Belt.startX, 12, 0)
 	wall.Color = Color3.fromRGB(40, 140, 220)
 	wall.Material = Enum.Material.Water
 	wall.Transparency = 0.35
@@ -55,7 +56,7 @@ function WaveServer.runWaveWall()
 			return
 		end
 		local alpha = i / steps
-		wall.Position = Vector3.new(-95 + alpha * 190, 12, 0)
+		wall.Position = Vector3.new(Config.Belt.startX + alpha * Config.Belt.length, 12, 0)
 		task.wait(Config.Wave.waveSeconds / steps)
 	end
 	wall:Destroy()
@@ -86,7 +87,11 @@ function WaveServer.strikeWave()
 					BrainrotServer.checkContracts(player)
 				else
 					-- Caught in the open: thrown back and fined 10% of cash.
-					local away = (root.Position - Vector3.new(0, 0, 0)).Unit
+					-- The push is horizontal, away from the island centre;
+					-- a player standing on the centre line gets pushed
+					-- south instead of a zero-length direction erroring.
+					local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
+					local away = flat.Magnitude > 1 and flat.Unit or Vector3.new(0, 0, 1)
 					root.AssemblyLinearVelocity = away * 30 + Vector3.new(0, 18, 0)
 					data.money = math.floor(data.money * (1 - Config.Wave.knockbackCashLoss))
 					-- A thief caught by the wave drops what they were carrying.
@@ -104,6 +109,14 @@ end
 -- require each other in a circle.
 WaveServer.onWaveDrop = nil
 
+-- Reviewer shortcut, used by TOUR.json only: jump the calm straight
+-- to its warning, so a reviewer can reach the tsunami screen without
+-- waiting out a full calm. It changes no money, brainrot or lock.
+WaveServer.skipRequested = false
+function WaveServer.skipToWarning(_arg)
+	WaveServer.skipRequested = true
+end
+
 -- Announce the phase to every client through the state snapshots.
 local function setPhase(phase, countdown)
 	State.wavePhase = phase
@@ -118,6 +131,10 @@ function WaveServer.startLoop()
 			for _ = 1, Config.Wave.calmSeconds do
 				task.wait(1)
 				State.waveCountdown -= 1
+				if WaveServer.skipRequested then
+					WaveServer.skipRequested = false
+					break
+				end
 			end
 			setPhase("warning", Config.Wave.warningSeconds)
 			for _ = 1, Config.Wave.warningSeconds do

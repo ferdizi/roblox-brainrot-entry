@@ -10,6 +10,14 @@
           0.2
         ],
         "Brightness": 2,
+        "ClockTime": 10,
+        "FogColor": [
+          0.62,
+          0.75,
+          0.85
+        ],
+        "FogEnd": 600,
+        "FogStart": 200,
         "GlobalShadows": true,
         "Outlines": false,
         "Technology": "Voxel"

@@ -10,9 +10,12 @@ local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared
 local WorldBuilder = {}
 
 -- Where each base sits, and which way its open front faces (towards 0,0).
+-- The ring is turned half a step (22.5 degrees), so no base sits on
+-- an axis: on the axes sit the belt, the volcano, the lagoon, the
+-- shop and the safe hill, and a base there would swallow them.
 WorldBuilder.basePositions = {}
 for i = 1, Config.Bases.count do
-	local angle = (i - 1) * (math.pi * 2 / Config.Bases.count)
+	local angle = (i - 1) * (math.pi * 2 / Config.Bases.count) + math.pi / Config.Bases.count
 	WorldBuilder.basePositions[i] = Vector3.new(
 		math.cos(angle) * Config.Bases.radius,
 		0,
@@ -110,11 +113,13 @@ function WorldBuilder.buildBase(index, centre)
 	return folder
 end
 
--- Where a brainrot model stands on a base slot.
+-- Where a brainrot model stands on a base slot. The y puts the body's
+-- centre a half-body above the pad top (pad top y=1.4, body half 1.5),
+-- so the model stands on the pad instead of sinking into it.
 function WorldBuilder.slotPosition(baseIndex, slot)
 	local centre = WorldBuilder.basePositions[baseIndex]
 	if not centre then
-		return Vector3.new(0, 2, 0)
+		return Vector3.new(0, 2.9, 0)
 	end
 	local offset = SLOT_OFFSETS[slot] or SLOT_OFFSETS[1]
 	local outward = centre.Unit
@@ -124,7 +129,7 @@ function WorldBuilder.slotPosition(baseIndex, slot)
 		0,
 		offset.X * math.sin(yaw) + offset.Z * math.cos(yaw)
 	)
-	return centre + rotated + Vector3.new(0, 1.4, 0)
+	return centre + rotated + Vector3.new(0, 2.9, 0)
 end
 
 function WorldBuilder.build()
@@ -155,10 +160,14 @@ function WorldBuilder.build()
 	label(hillTop, "SAFE HILL", Color3.fromRGB(255, 255, 255), 24)
 
 	-- The belt: the runway brainrots walk, volcano end to lagoon end.
-	local belt = part("Belt", Vector3.new(Config.Belt.length, 1, Config.Belt.width), Vector3.new(0, 0.7, 0), Color3.fromRGB(60, 60, 75), Enum.Material.Concrete, folder)
+	-- Its centre and end pads come from Config.Belt, so the part, the
+	-- spawn point and the walk code can never disagree about its ends.
+	local beltStart = Config.Belt.startX
+	local beltEnd = beltStart + Config.Belt.length
+	local belt = part("Belt", Vector3.new(Config.Belt.length, 1, Config.Belt.width), Vector3.new(beltStart + Config.Belt.length / 2, 0.7, 0), Color3.fromRGB(60, 60, 75), Enum.Material.Concrete, folder)
 	label(belt, "BRAINROT BELT - click a brainrot to buy it", Color3.fromRGB(255, 240, 120), 20)
-	part("BeltStart", Vector3.new(8, 1.4, 10), Vector3.new(-89, 0.9, 0), Color3.fromRGB(255, 120, 40), Enum.Material.Neon, folder)
-	part("BeltEnd", Vector3.new(8, 1.4, 10), Vector3.new(89, 0.9, 0), Color3.fromRGB(60, 160, 255), Enum.Material.Neon, folder)
+	part("BeltStart", Vector3.new(8, 1.4, 10), Vector3.new(beltStart, 0.9, 0), Color3.fromRGB(255, 120, 40), Enum.Material.Neon, folder)
+	part("BeltEnd", Vector3.new(8, 1.4, 10), Vector3.new(beltEnd, 0.9, 0), Color3.fromRGB(60, 160, 255), Enum.Material.Neon, folder)
 
 	-- The shop pad: where upgrades are bought (the HUD buttons do it too).
 	local shop = part("ShopPad", Vector3.new(14, 1, 14), Vector3.new(0, 0.7, 72), Color3.fromRGB(255, 200, 60), Enum.Material.SmoothPlastic, folder)
@@ -184,10 +193,11 @@ function WorldBuilder.build()
 end
 
 -- Belt position for a brainrot that has walked a given distance in studs.
+-- The y puts the body's centre a half-body above the belt top (belt
+-- top y=1.2, body half 1.5), so it walks on the belt, not inside it.
 function WorldBuilder.beltPosition(progress)
-	local half = Config.Belt.length / 2
-	local x = -half + progress
-	return Vector3.new(x, 2.2, 0)
+	local x = Config.Belt.startX + progress
+	return Vector3.new(x, 2.7, 0)
 end
 
 return WorldBuilder

@@ -104,16 +104,14 @@ function State.slapPower(data)
 end
 
 -- Cost of the next level of an upgrade, or nil when maxed out.
+-- The price itself lives in Config, so server and HUD agree on it.
 function State.upgradeCost(data, kind)
 	local def = Config.Upgrades[kind]
 	if not def then
 		return nil
 	end
 	local level = data.upgrades[kind] or 0
-	if level >= def.maxLevel then
-		return nil
-	end
-	return math.floor(def.baseCost * (def.costMult ^ level) + 0.5)
+	return Config.upgradeCost(kind, level)
 end
 
 -- Rebirth price for this player right now.
@@ -131,11 +129,15 @@ function State.ownedCount(data)
 end
 
 -- Make a fresh belt brainrot: cast + mutation + price + uid.
+-- The uid is handed out here, once, so two brainrots can never share
+-- one even if a caller also stamps its own number on the entry.
 function State.newBeltBrainrot(stormActive)
 	local cast = Config.rollCast()
 	local mutation = Config.rollMutation(stormActive)
+	local uid = State.nextUid
+	State.nextUid += 1
 	return {
-		uid = State.nextUid,
+		uid = uid,
 		castId = cast.id,
 		name = cast.name,
 		rarity = cast.rarity,
@@ -191,6 +193,7 @@ function State.snapshotFor(player)
 		lockedUntil = data.lockedUntil,
 		lockCooldownUntil = data.lockCooldownUntil,
 		lockLength = State.lockLength(data),
+		upgrades = data.upgrades, -- so the HUD can price the next level
 		carrying = data.carrying ~= nil,
 		owned = owned,
 		dex = data.dex,

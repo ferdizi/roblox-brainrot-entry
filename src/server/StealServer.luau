@@ -16,6 +16,35 @@ local BrainrotServer = require(script.Parent:WaitForChild("BrainrotServer"))
 local StealServer = {}
 StealServer.remotes = nil
 
+-- Weld every loose part of a carried model to its PrimaryPart, so the
+-- whole character rides overhead instead of only its body: unanchored
+-- parts with no weld to anything fall off under gravity the moment the
+-- thief starts moving. The welds are named, so deliver/drop can find
+-- and remove exactly these and nothing else.
+local function weldModelParts(model)
+	local primary = model.PrimaryPart
+	if not primary then
+		return
+	end
+	for _, part in ipairs(model:GetDescendants()) do
+		if part:IsA("BasePart") and part ~= primary then
+			local weld = Instance.new("WeldConstraint")
+			weld.Name = "CarryPartWeld"
+			weld.Part0 = primary
+			weld.Part1 = part
+			weld.Parent = model
+		end
+	end
+end
+
+local function unweldModelParts(model)
+	for _, weld in ipairs(model:GetDescendants()) do
+		if weld:IsA("WeldConstraint") and (weld.Name == "CarryWeld" or weld.Name == "CarryPartWeld") then
+			weld:Destroy()
+		end
+	end
+end
+
 -- Show or hide a base's red lock gate, so everyone can see it is shut.
 local function setGateVisible(baseIndex, visible)
 	local base = workspace:FindFirstChild("Base" .. tostring(baseIndex))
@@ -118,13 +147,15 @@ function StealServer.stealBrainrot(player, victim, slot)
 		owner = victim,
 		originalSlot = slot,
 	}
-	-- Carry it overhead: weld it to the thief's head.
+	-- Carry it overhead: weld it to the thief's head, and weld its own
+	-- loose parts to its body first, or the character falls apart.
 	model:PivotTo(CFrame.new(root.Position + Vector3.new(0, 4, 0)))
 	local weld = Instance.new("WeldConstraint")
 	weld.Name = "CarryWeld"
 	weld.Part0 = model.PrimaryPart
 	weld.Part1 = root
 	weld.Parent = model
+	weldModelParts(model)
 	for _, part in ipairs(model:GetDescendants()) do
 		if part:IsA("BasePart") then
 			part.Anchored = false
@@ -148,11 +179,7 @@ function StealServer.deliverCarried(player)
 	data.carrying = nil
 	local model = carried.model
 	if model then
-		for _, weld in ipairs(model:GetChildren()) do
-			if weld.Name == "CarryWeld" then
-				weld:Destroy()
-			end
-		end
+		unweldModelParts(model)
 		for _, part in ipairs(model:GetDescendants()) do
 			if part:IsA("BasePart") then
 				part.Anchored = true
@@ -195,11 +222,7 @@ function StealServer.dropCarried(player)
 	local victimData = State.get(carried.owner)
 	local model = carried.model
 	if model then
-		for _, weld in ipairs(model:GetChildren()) do
-			if weld.Name == "CarryWeld" then
-				weld:Destroy()
-			end
-		end
+		unweldModelParts(model)
 		for _, part in ipairs(model:GetDescendants()) do
 			if part:IsA("BasePart") then
 				part.Anchored = true

@@ -24,7 +24,7 @@
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-roblox.ts';
@@ -34,6 +34,18 @@ const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
 /** cpSync's filter: leave out every file and directory whose name starts with a dot (.gitkeep, .DS_Store, .git). */
 const notDotted = (path: string): boolean => !basename(path).startsWith('.');
+
+// Fail fast on a place the gate would refuse outright, instead of
+// handing in a 0-byte or oversized game.rbxl and finding out at grade time.
+const placePath = join(here, 'game.rbxl');
+const placeBytes = statSync(placePath).size;
+if (placeBytes === 0 || placeBytes > 32 * 1024 * 1024) {
+  throw new Error(`game.rbxl is ${placeBytes} bytes — the gate takes a binary place of 1 byte to 32 MiB.`);
+}
+const shots = existsSync(join(here, 'screenshots')) ? readdirSync(join(here, 'screenshots')).filter((f) => !f.startsWith('.')) : [];
+if (shots.length < 3 || shots.length > 4) {
+  console.warn(`WARNING: screenshots/ holds ${shots.length} images — the gate takes 3 or 4.`);
+}
 
 // Make sure the output directory exists before the first copy lands in it.
 mkdirSync(out, { recursive: true });

@@ -27,9 +27,11 @@ rolls while a tsunami warning is live).
 
 ## The loop
 
-1. **Buy** — click a brainrot walking the belt (or tap its row in the belt list).
+1. **Buy** — click a brainrot walking the belt (or tap its row in the belt list —
+   each row is a button that buys that brainrot).
    It walks to a free slot on your base and starts paying $/second.
 2. **Earn** — income ticks server-side every second; the HUD shows cash, $/s and slots.
+   Upgrade buttons show the next level's price; the lock button shows locked / cooldown seconds.
 3. **Steal** — click a brainrot on someone else's base, carry it home on foot.
    The victim can **slap** (F) to knock it out of your hands. **Lock** your base (L)
    for 30s to block stealing entirely (90s cooldown).
@@ -38,6 +40,33 @@ rolls while a tsunami warning is live).
    back and lose 10% of your cash. Hide in your base or on the safe hill.
 5. **Progress** — upgrades (extra slots, walk speed, slap power, longer lock),
    rebirths (+50% income each), a BrainrotDex, and a Contract Board with cash rewards.
+
+## Polish pass (review fixes, 18 Nov)
+
+The first build was reviewed line by line and fixed where it would have
+broken or misled in Studio:
+
+- **Layout:** the eight bases are turned half a step (22.5°) so none sits on
+  the belt, the volcano, the lagoon, the shop or the safe hill; the belt now
+  starts at x=-70, clear of the volcano rock, and runs into the lagoon.
+- **Models stand on the world:** belt brainrots ride at y=2.7 and base models
+  at y=2.9 (half a body above the surface) instead of sinking into the belt
+  and the slot pads.
+- **Carrying works:** every loose part of a stolen brainrot is welded to its
+  body while it is carried — before, only the body was welded and the head,
+  eyes and hat fell off mid-carry.
+- **Rebirth while carrying** hands the stolen brainrot back first, instead of
+  leaving a carried ghost after the wipe.
+- **HUD tells the truth:** belt rows are real buy buttons, upgrade rows show
+  level + next price (priced by the same `Config.upgradeCost` the server
+  charges), and the lock button shows locked / cooldown seconds.
+- **One uid source:** `State.newBeltBrainrot` hands out uids, so two spawns
+  can never share one; `Config.incomePerSecond` treats a missing mutation
+  as x1 instead of erroring; the tsunami knockback never divides by a
+  zero-length direction.
+- **TOUR.json** can now reach the tsunami screen: `WaveServer.skipToWarning`
+  jumps the calm to its warning for reviewers only (no money or brainrot
+  changes hands).
 
 ## Controls
 

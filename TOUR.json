@@ -1,1 +1,1 @@
-{"steps":[{"keys":["W"],"screenshot":"1-start.png","wait_ms":1000},{"keys":["W"],"screenshot":"2-play.png","wait_ms":2000},{"screenshot":"3-tsunami.png","wait_ms":3000},{"keys":["R"],"screenshot":"4-win.png","wait_ms":1500}],"tour":1}
+{"steps":[{"keys":["W"],"screenshot":"1-start.png","wait_ms":1000},{"keys":["W"],"screenshot":"2-play.png","wait_ms":2000},{"call":{"arg":"now","fn":"skipToWarning","module":"ServerScriptService.Server.WaveServer","on":"Server"},"screenshot":"3-tsunami.png","wait_ms":1000},{"keys":["U"],"screenshot":"4-win.png","wait_ms":1500}],"tour":1}

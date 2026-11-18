@@ -11,7 +11,10 @@ local ContextActionService = game:GetService("ContextActionService")
 local Input = {}
 
 -- Bind one key to one action. actionName must be unique per binding.
+-- The old binding is dropped first, so binding twice (a re-run of the
+-- client bootstrap, a hot reload) never stacks two handlers on one key.
 function Input.bindKey(actionName, keyCode, fn)
+	ContextActionService:UnbindAction(actionName)
 	ContextActionService:BindAction(actionName, function(_action, state, _input)
 		if state == Enum.UserInputState.Begin then
 			fn()

@@ -1,2 +1,4 @@
+# Local build output from `MAKEFUN_OUTPUT_DIR=out node main.ts` — never committed.
+# game.rbxl IS committed (it is the entry's place file, built by Rojo).
 out/
 .DS_Store

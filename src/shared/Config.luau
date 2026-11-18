@@ -100,7 +100,10 @@ Config.Mutations = {
 }
 
 -- The belt: where brainrots walk before someone buys them.
+-- The belt starts clear of the volcano rock (its east edge is x=-74)
+-- and runs east into the lagoon, so a brainrot is visible the whole way.
 Config.Belt = {
+	startX = -70, -- studs: west end of the belt, just east of the volcano
 	length = 170, -- studs, from the volcano end to the lagoon end
 	width = 8,
 	maxOnBelt = 8,
@@ -196,9 +199,26 @@ function Config.rollMutation(stormActive)
 end
 
 -- How much a brainrot earns per second, after mutation and rebirths.
+-- A cast entry on its own has no mutationMult, so a missing one counts
+-- as plain x1 instead of erroring on nil arithmetic.
 function Config.incomePerSecond(entry, rebirths)
+	local mutationMult = entry.mutationMult or 1
 	local mult = 1 + Config.Rebirth.multPerRebirth * rebirths
-	return math.floor(entry.rate * entry.mutationMult * mult + 0.5)
+	return math.floor(entry.rate * mutationMult * mult + 0.5)
+end
+
+-- Cost of the next level of an upgrade, or nil when maxed out. Lives
+-- here, not in State, so the client HUD can price the same buttons
+-- with the same numbers the server charges.
+function Config.upgradeCost(kind, level)
+	local def = Config.Upgrades[kind]
+	if not def then
+		return nil
+	end
+	if level >= def.maxLevel then
+		return nil
+	end
+	return math.floor(def.baseCost * (def.costMult ^ level) + 0.5)
 end
 
 -- Short money text for labels: 1250 -> "$1.2k".

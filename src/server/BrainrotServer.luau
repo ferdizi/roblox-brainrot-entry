@@ -7,7 +7,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local State = require(script.Parent:WaitForChild("State"))
@@ -155,13 +154,13 @@ function BrainrotServer.walkModelTo(model, target)
 end
 
 -- Spawn one brainrot at the volcano end of the belt and let it walk.
+-- Its uid comes from State.newBeltBrainrot alone; stamping a second
+-- number here once gave two spawns the same uid.
 function BrainrotServer.spawnBrainrotOnBelt()
 	if #State.belt >= Config.Belt.maxOnBelt then
 		return
 	end
 	local entry = State.newBeltBrainrot(State.wavePhase == "warning")
-	entry.uid = State.nextUid
-	State.nextUid += 1
 	table.insert(State.belt, entry)
 
 	local model = BrainrotServer.buildModel(entry)
@@ -192,6 +191,10 @@ end
 -- Kept as a hook (not a require) so this module and StealServer never
 -- require each other in a circle.
 BrainrotServer.onBaseClick = nil
+
+-- Hook set by init.server: what happens to a stolen brainrot a player
+-- is still carrying when they rebirth. Same no-circle reason.
+BrainrotServer.onRebirthDrop = nil
 
 -- Remove a belt brainrot and its model (bought, washed away, despawned).
 function BrainrotServer.removeBeltBrainrot(uid)
@@ -310,6 +313,11 @@ function BrainrotServer.doRebirth(player)
 	end
 	if State.ownedCount(data) < Config.Rebirth.minBrainrots then
 		return false, "need at least " .. tostring(Config.Rebirth.minBrainrots) .. " brainrots"
+	end
+	-- A stolen brainrot still in hand goes back to its owner first,
+	-- or the rebirth would wipe the base and leave a ghost carried.
+	if data.carrying and BrainrotServer.onRebirthDrop then
+		BrainrotServer.onRebirthDrop(player)
 	end
 	for _, owned in pairs(data.brainrots) do
 		if owned.model then

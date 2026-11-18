@@ -38,6 +38,11 @@ local callbacks = {
 	upgrade = function(kind)
 		buyUpgrade:FireServer(kind)
 	end,
+	-- Tapping a row in the belt list buys that brainrot: the server
+	-- re-checks cash, free slot and belt membership before it moves.
+	buy = function(uid)
+		buyBrainrot:FireServer(uid)
+	end,
 }
 
 Ui.build(playerGui, callbacks)

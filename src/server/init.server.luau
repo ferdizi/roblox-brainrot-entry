@@ -54,7 +54,15 @@ WaveServer.onWaveDrop = function(player)
 	StealServer.dropCarried(player)
 end
 
--- Bases are handed out in join order, first come first served.
+-- A rebirth while carrying hands the stolen brainrot back first, so
+-- the wipe cannot leave a carried model with nowhere to go.
+BrainrotServer.onRebirthDrop = function(player)
+	StealServer.dropCarried(player)
+end
+
+-- Bases are handed out in join order, first come first served. Past
+-- eight players the ring wraps and two players share a base: the game
+-- is built for eight plots, and a ninth player still gets to play.
 local nextBase = 1
 
 local function onPlayerAdded(player)

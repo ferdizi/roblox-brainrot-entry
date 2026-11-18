@@ -246,6 +246,8 @@ function Ui.update(snapshot)
 	end
 
 	-- Belt list: up to eight rows, name, rarity, mutation, rate, cost.
+	-- Each row is a button: tapping it buys that brainrot, the same
+	-- buy as clicking its 3D model on the belt.
 	for _, child in ipairs(Ui.beltList:GetChildren()) do
 		child:Destroy()
 	end
@@ -253,16 +255,24 @@ function Ui.update(snapshot)
 		if i > 8 then
 			break
 		end
-		local row = makeLabel(
+		local row = makeButton(
 			Ui.beltList,
 			"Belt_" .. tostring(entry.uid),
 			entry.name .. " [" .. entry.mutation .. "] " .. Config.formatMoney(entry.rate) .. "/s - " .. Config.formatMoney(entry.cost),
 			UDim2.new(1, -8, 0, 30),
-			UDim2.new(0, 4, 0, (i - 1) * 34),
-			Config.RarityColour[entry.rarity] or Color3.fromRGB(255, 255, 255),
-			14
+			UDim2.new(0, 4, 0, (i - 1) * 34)
 		)
+		-- Rarity colours the text, not the button: white-on-purple and
+		-- dark-on-yellow both read badly, one dark button does not.
+		row.TextColor3 = Config.RarityColour[entry.rarity] or Color3.fromRGB(255, 255, 255)
+		row.TextSize = 14
 		row.TextXAlignment = Enum.TextXAlignment.Left
+		local uid = entry.uid
+		row.MouseButton1Click:Connect(function()
+			if Ui.callbacks.buy then
+				Ui.callbacks.buy(uid)
+			end
+		end)
 	end
 
 	-- Dex ticks: a check mark once a cast member has been owned.
@@ -282,6 +292,31 @@ function Ui.update(snapshot)
 			local done = snapshot.contractsDone and snapshot.contractsDone[contract.id]
 			row.Text = contract.name .. ": " .. tostring(progress) .. "/" .. tostring(contract.goal) .. (done and " DONE +" .. Config.formatMoney(contract.reward) or " - reward " .. Config.formatMoney(contract.reward))
 		end
+	end
+
+	-- Upgrade rows: name, level owned, and the next level's price, so
+	-- a player can tell what a button costs before tapping it. The
+	-- price comes from Config.upgradeCost, the same helper the server
+	-- charges with, so the two can never disagree.
+	for kind, row in pairs(Ui.upgradeRows or {}) do
+		local def = Config.Upgrades[kind]
+		local level = snapshot.upgrades and snapshot.upgrades[kind] or 0
+		local cost = Config.upgradeCost(kind, level)
+		if cost then
+			row.Text = def.name .. "  Lv " .. tostring(level) .. "  -  " .. Config.formatMoney(cost)
+		else
+			row.Text = def.name .. "  Lv " .. tostring(level) .. "  -  MAX"
+		end
+	end
+
+	-- Lock button: locked, cooling down, or ready, with its seconds.
+	local now = os.time()
+	if snapshot.lockedUntil and now < snapshot.lockedUntil then
+		Ui.lockButton.Text = "LOCKED (" .. tostring(snapshot.lockedUntil - now) .. "s)"
+	elseif snapshot.lockCooldownUntil and now < snapshot.lockCooldownUntil then
+		Ui.lockButton.Text = "LOCK IN " .. tostring(snapshot.lockCooldownUntil - now) .. "s"
+	else
+		Ui.lockButton.Text = "LOCK BASE (L)"
 	end
 
 	-- Carrying a stolen brainrot: say so, loudly.

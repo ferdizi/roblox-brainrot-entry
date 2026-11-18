@@ -17,10 +17,15 @@ computer and your Roblox account. Do them in order. Deadline: Fri 20 Nov 2026,
 1. Open Roblox Studio → open `game.rbxl` from the cloned repo.
 2. Press **Play** (F5). You should spawn near the shop pad on a sandy island:
    a volcano on the west end, a lagoon on the east, a belt running between them,
-   8 bases in a ring, and brainrots walking the belt within a few seconds.
+   8 bases in a ring (turned half a step, so none sits on the belt or the volcano),
+   and brainrots walking the belt within a few seconds, standing on it — not sunk into it.
 3. Click a brainrot on the belt to buy it — it should waddle to your base and your
-   money should start ticking up in the top-right HUD.
+   money should start ticking up in the top-right HUD. Tapping its row in the belt
+   list on the right buys it too. The Upgrades panel (U) now shows each upgrade's
+   next price, and the LOCK button shows locked / cooldown seconds.
 4. Watch the top-centre banner: a tsunami warning comes about every 90 seconds.
+   (TOUR.json can jump straight to a warning for the 3-tsunami.png shot, via
+   `WaveServer.skipToWarning` — reviewers only, it changes no money.)
 5. Press **Stop** when you are happy it runs. If anything errors, check the Output
    window and tell the agent the exact error line.
 
