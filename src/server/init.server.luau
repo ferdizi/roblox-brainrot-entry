@@ -1,1 +1,104 @@
-print("Hello world, from server!")
+-- BRAINROT KRAKATOA: server bootstrap.
+-- One script starts the game: it builds the island, creates the
+-- RemoteEvents the client may use, hands each joining player a base
+-- and a fresh state, and starts the belt, the stealing and the tsunami.
+-- Nothing else runs on the server without going through here first.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
+local State = require(script.Parent:WaitForChild("State"))
+local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
+local BrainrotServer = require(script.Parent:WaitForChild("BrainrotServer"))
+local StealServer = require(script.Parent:WaitForChild("StealServer"))
+local WaveServer = require(script.Parent:WaitForChild("WaveServer"))
+
+print("BRAINROT KRAKATOA starting: building the island...")
+
+-- The island, the belt, the volcano, the hill and eight bases.
+WorldBuilder.build()
+
+-- The RemoteEvents. The client may only fire the ones listed here;
+-- every one is validated again on the server before it does anything.
+local remotesFolder = Instance.new("Folder")
+remotesFolder.Name = "KrakatoaRemotes"
+remotesFolder.Parent = ReplicatedStorage
+
+local remoteNames = {
+	"BuyBrainrot",
+	"LockBase",
+	"Slap",
+	"StealBrainrot",
+	"Rebirth",
+	"BuyUpgrade",
+	"StateSync",
+}
+local remotes = {}
+for _, name in ipairs(remoteNames) do
+	local remote = Instance.new("RemoteEvent")
+	remote.Name = name
+	remote.Parent = remotesFolder
+	remotes[name] = remote
+end
+
+-- Clicking a brainrot that lives on a base is a steal attempt, not a
+-- buy. The belt module does not know about stealing, so the bootstrap
+-- wires the two together here, with no require circle between them.
+BrainrotServer.onBaseClick = function(player, model)
+	StealServer.stealByModel(player, model)
+end
+
+-- A tsunami that catches a thief mid-carry makes them drop the prize.
+WaveServer.onWaveDrop = function(player)
+	StealServer.dropCarried(player)
+end
+
+-- Bases are handed out in join order, first come first served.
+local nextBase = 1
+
+local function onPlayerAdded(player)
+	local baseIndex = nextBase
+	nextBase += 1
+	if nextBase > Config.Bases.count then
+		nextBase = 1
+	end
+	State.addPlayer(player, baseIndex)
+	StealServer.applyWalkSpeed(player)
+
+	-- Keep the walk speed right after every respawn.
+	player.CharacterAdded:Connect(function(_character)
+		task.wait(0.5)
+		StealServer.applyWalkSpeed(player)
+	end)
+
+	-- A first snapshot right away, so the HUD is never empty.
+	task.wait(1)
+	local snapshot = State.snapshotFor(player)
+	if snapshot then
+		remotes.StateSync:FireClient(player, snapshot)
+	end
+	print(player.Name .. " joined BRAINROT KRAKATOA on base " .. tostring(baseIndex))
+end
+
+local function onPlayerRemoving(player)
+	local data = State.get(player)
+	if data and data.carrying then
+		-- A thief who leaves drops the prize back where it came from.
+		StealServer.dropCarried(player)
+	end
+	State.removePlayer(player)
+end
+
+Players.PlayerAdded:Connect(onPlayerAdded)
+Players.PlayerRemoving:Connect(onPlayerRemoving)
+for _, player in ipairs(Players:GetPlayers()) do
+	task.spawn(onPlayerAdded, player)
+end
+
+-- Start the three systems that run the game.
+BrainrotServer.start(remotes)
+StealServer.start(remotes)
+WaveServer.start(remotes)
+
+print("BRAINROT KRAKATOA live: belt, bases, stealing and tsunami running.")
