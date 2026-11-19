@@ -70,6 +70,77 @@ local function label(parent, text, colour, size)
 	return gui
 end
 
+-- Decoration helpers. Decor is purely visual: every part it makes is
+-- Anchored and CanCollide=false, so it can never change how the game
+-- plays — it only makes the island look like a real place.
+local function decor(name, size, position, colour, material, parent)
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Size = size
+	p.Position = position
+	p.Color = colour
+	p.Material = material or Enum.Material.SmoothPlastic
+	p.Anchored = true
+	p.CanCollide = false
+	p.Parent = parent
+	return p
+end
+
+local function decorT(name, size, position, colour, material, parent, transparency)
+	local p = decor(name, size, position, colour, material, parent)
+	p.Transparency = transparency
+	return p
+end
+
+-- Decor rotated around Y (yaw in radians).
+local function decorR(name, size, position, colour, material, parent, yaw)
+	local p = decor(name, size, position, colour, material, parent)
+	p.CFrame = CFrame.new(position) * CFrame.Angles(0, yaw, 0)
+	return p
+end
+
+local function ball(name, diameter, position, colour, material, parent, transparency)
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Shape = Enum.PartType.Ball
+	p.Size = Vector3.new(diameter, diameter, diameter)
+	p.Position = position
+	p.Color = colour
+	p.Material = material or Enum.Material.SmoothPlastic
+	p.Anchored = true
+	p.CanCollide = false
+	p.Transparency = transparency or 0
+	p.Parent = parent
+	return p
+end
+
+local function flatball(name, size, position, colour, material, parent, transparency)
+	local p = Instance.new("Part")
+	p.Name = name
+	p.Shape = Enum.PartType.Ball
+	p.Size = size
+	p.Position = position
+	p.Color = colour
+	p.Material = material or Enum.Material.SmoothPlastic
+	p.Anchored = true
+	p.CanCollide = false
+	p.Transparency = transparency or 0
+	p.Parent = parent
+	return p
+end
+
+-- One accent colour per base, so every base reads as its own team.
+local BASE_ACCENTS = {
+	Color3.fromRGB(255, 70, 70),
+	Color3.fromRGB(255, 150, 40),
+	Color3.fromRGB(255, 220, 60),
+	Color3.fromRGB(80, 200, 90),
+	Color3.fromRGB(70, 150, 255),
+	Color3.fromRGB(170, 90, 255),
+	Color3.fromRGB(255, 90, 180),
+	Color3.fromRGB(60, 220, 220),
+}
+
 -- Build one player base: floor, back wall, side walls, slot pads, a sign.
 -- Returns the folder holding it, so the server can find its slot pads.
 function WorldBuilder.buildBase(index, centre)
@@ -110,6 +181,18 @@ function WorldBuilder.buildBase(index, centre)
 		pad.Transparency = 0.35
 	end
 
+	-- Base character (visual only): an accent trim on the back wall,
+	-- gate posts at the front corners, a flag on the back wall, and
+	-- an awning over it. The floor, walls, pads and lock gate above
+	-- are untouched.
+	local accent = BASE_ACCENTS[((index - 1) % #BASE_ACCENTS) + 1]
+	decorR("Trim", Vector3.new(18, 0.5, 0.3), backPos - outward * 0.6 + Vector3.new(0, 5.6, 0), accent, Enum.Material.Neon, folder, yaw)
+	decor("GatePostL", Vector3.new(1, 5, 1), centre - outward * 6.5 + sideDir * 8.5 + Vector3.new(0, 3.5, 0), accent, Enum.Material.SmoothPlastic, folder)
+	decor("GatePostR", Vector3.new(1, 5, 1), centre - outward * 6.5 - sideDir * 8.5 + Vector3.new(0, 3.5, 0), accent, Enum.Material.SmoothPlastic, folder)
+	decor("FlagPole", Vector3.new(0.4, 6, 0.4), backPos + Vector3.new(0, 9, 0), Color3.fromRGB(90, 90, 100), Enum.Material.Metal, folder)
+	decorR("Flag", Vector3.new(3.2, 2, 0.15), backPos + Vector3.new(0, 10.8, 0), accent, Enum.Material.Neon, folder, yaw)
+	decorR("Awning", Vector3.new(18, 0.5, 4), backPos + outward * 2 + Vector3.new(0, 6.4, 0), accent, Enum.Material.SmoothPlastic, folder, yaw)
+
 	return folder
 end
 
@@ -130,6 +213,156 @@ function WorldBuilder.slotPosition(baseIndex, slot)
 		offset.X * math.sin(yaw) + offset.Z * math.cos(yaw)
 	)
 	return centre + rotated + Vector3.new(0, 2.9, 0)
+end
+
+-- Volcano dressing: lava flows down the stepped faces, smoke puffs
+-- above the crater, lava drips on the crater rim, boulders at the foot.
+-- The east tier-1 flow sits clear of the belt start pad (off to its
+-- side and above it), so no flow ever touches the belt.
+local function decorateVolcano(folder)
+	local lava = Color3.fromRGB(255, 150, 40)
+	local orange = Color3.fromRGB(255, 110, 25)
+	decor("LavaFlowE1", Vector3.new(0.6, 6, 3), Vector3.new(-73.7, 6, 8), lava, Enum.Material.Neon, folder)
+	decor("LavaFlowE2", Vector3.new(0.6, 6, 3), Vector3.new(-80.7, 15, -4), lava, Enum.Material.Neon, folder)
+	decor("LavaFlowE3", Vector3.new(0.6, 5, 2.5), Vector3.new(-87.7, 24, 3), lava, Enum.Material.Neon, folder)
+	decor("LavaFlowN1", Vector3.new(3, 7, 0.6), Vector3.new(-100, 5, -21.7), lava, Enum.Material.Neon, folder)
+	decor("LavaFlowN2", Vector3.new(3, 6, 0.6), Vector3.new(-92, 15, -14.7), lava, Enum.Material.Neon, folder)
+	decor("LavaFlowS1", Vector3.new(3, 7, 0.6), Vector3.new(-102, 5, 21.7), lava, Enum.Material.Neon, folder)
+	decor("LavaFlowS2", Vector3.new(3, 6, 0.6), Vector3.new(-90, 15, 14.7), lava, Enum.Material.Neon, folder)
+	decor("LavaFlowW1", Vector3.new(0.6, 7, 3), Vector3.new(-118.3, 5, 5), lava, Enum.Material.Neon, folder)
+	decor("LavaFlowW2", Vector3.new(0.6, 6, 3), Vector3.new(-111.3, 15, -6), lava, Enum.Material.Neon, folder)
+	local smoke = Color3.fromRGB(130, 130, 130)
+	ball("Smoke1", 8, Vector3.new(-96, 34, 0), smoke, Enum.Material.SmoothPlastic, folder, 0.45)
+	ball("Smoke2", 6, Vector3.new(-91, 38, 4), smoke, Enum.Material.SmoothPlastic, folder, 0.5)
+	ball("Smoke3", 7, Vector3.new(-101, 37, -4), smoke, Enum.Material.SmoothPlastic, folder, 0.45)
+	ball("Smoke4", 5, Vector3.new(-96, 42, 1), smoke, Enum.Material.SmoothPlastic, folder, 0.55)
+	decor("CraterDrip1", Vector3.new(2, 1, 2), Vector3.new(-90.5, 29, 0), orange, Enum.Material.Neon, folder)
+	decor("CraterDrip2", Vector3.new(2, 1, 2), Vector3.new(-101.5, 29, 0), orange, Enum.Material.Neon, folder)
+	decor("CraterDrip3", Vector3.new(2, 1, 2), Vector3.new(-96, 29, 5.5), orange, Enum.Material.Neon, folder)
+	decor("CraterDrip4", Vector3.new(2, 1, 2), Vector3.new(-96, 29, -5.5), orange, Enum.Material.Neon, folder)
+	local rock = Color3.fromRGB(100, 95, 90)
+	ball("VolcanoRock1", 4, Vector3.new(-122, 2.3, 12), rock, Enum.Material.Rock, folder, 0)
+	ball("VolcanoRock2", 3, Vector3.new(-120, 1.8, -14), rock, Enum.Material.Rock, folder, 0)
+	ball("VolcanoRock3", 3.5, Vector3.new(-76, 2.05, 16), rock, Enum.Material.Rock, folder, 0)
+	ball("VolcanoRock4", 4, Vector3.new(-78, 2.3, -14), rock, Enum.Material.Rock, folder, 0)
+end
+
+-- Belt dressing: side skirts and glowing rails so it reads as a real
+-- conveyor, roller stripes across it, and chevrons pointing east, the
+-- way brainrots walk. All flat on the belt top, never in their path.
+local function decorateBelt(folder)
+	local beltStart = Config.Belt.startX
+	local beltEnd = beltStart + Config.Belt.length
+	local midX = beltStart + Config.Belt.length / 2
+	local halfW = Config.Belt.width / 2
+	decor("BeltSkirtN", Vector3.new(Config.Belt.length, 1, 0.8), Vector3.new(midX, 0.7, -halfW - 0.4), Color3.fromRGB(45, 45, 55), Enum.Material.Metal, folder)
+	decor("BeltSkirtS", Vector3.new(Config.Belt.length, 1, 0.8), Vector3.new(midX, 0.7, halfW + 0.4), Color3.fromRGB(45, 45, 55), Enum.Material.Metal, folder)
+	decor("BeltRailN", Vector3.new(Config.Belt.length, 0.3, 0.4), Vector3.new(midX, 1.35, -halfW - 0.4), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder)
+	decor("BeltRailS", Vector3.new(Config.Belt.length, 0.3, 0.4), Vector3.new(midX, 1.35, halfW + 0.4), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder)
+	for x = beltStart + 8, beltEnd - 8, 20 do
+		decor("BeltRoller", Vector3.new(1, 0.12, Config.Belt.width - 1), Vector3.new(x, 1.26, 0), Color3.fromRGB(180, 180, 190), Enum.Material.Metal, folder)
+	end
+	for _, cx in ipairs({ -40, 0, 40 }) do
+		decorR("BeltChevronA", Vector3.new(2.6, 0.15, 0.9), Vector3.new(cx, 1.3, -0.92), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder, math.rad(135))
+		decorR("BeltChevronB", Vector3.new(2.6, 0.15, 0.9), Vector3.new(cx, 1.3, 0.92), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder, math.rad(-135))
+	end
+end
+
+-- Lagoon dressing: a foam rim framing the water, rocks at its edge.
+local function decorateLagoon(folder)
+	local foam = Color3.fromRGB(240, 245, 255)
+	decorT("LagoonFoamN", Vector3.new(58, 0.15, 2), Vector3.new(96, 0.85, -23), foam, Enum.Material.SmoothPlastic, folder, 0.25)
+	decorT("LagoonFoamS", Vector3.new(58, 0.15, 2), Vector3.new(96, 0.85, 23), foam, Enum.Material.SmoothPlastic, folder, 0.25)
+	decorT("LagoonFoamW", Vector3.new(2, 0.15, 46), Vector3.new(67, 0.85, 0), foam, Enum.Material.SmoothPlastic, folder, 0.25)
+	decorT("LagoonFoamE", Vector3.new(2, 0.15, 46), Vector3.new(125, 0.85, 0), foam, Enum.Material.SmoothPlastic, folder, 0.25)
+	local rock = Color3.fromRGB(110, 110, 110)
+	ball("LagoonRock1", 3, Vector3.new(68, 1.8, -22), rock, Enum.Material.Rock, folder, 0)
+	ball("LagoonRock2", 4, Vector3.new(124, 2.3, 22), rock, Enum.Material.Rock, folder, 0)
+	ball("LagoonRock3", 2.5, Vector3.new(68, 1.55, 22), rock, Enum.Material.Rock, folder, 0)
+	ball("LagoonRock4", 3, Vector3.new(124, 1.8, -22), rock, Enum.Material.Rock, folder, 0)
+end
+
+-- Safe hill dressing: a flag on the summit, grass tufts on the
+-- terraces, rocks at its foot, and stepping stones down to the belt.
+local function decorateHill(folder)
+	decor("HillFlagPole", Vector3.new(0.4, 7, 0.4), Vector3.new(0, 18.5, -96), Color3.fromRGB(90, 90, 100), Enum.Material.Metal, folder)
+	decor("HillFlag", Vector3.new(3.5, 2, 0.15), Vector3.new(0, 20.5, -96), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder)
+	local tuft = Color3.fromRGB(60, 140, 60)
+	ball("HillTuft1", 2, Vector3.new(-13, 8.7, -96), tuft, Enum.Material.Grass, folder, 0)
+	ball("HillTuft2", 2, Vector3.new(13, 8.7, -96), tuft, Enum.Material.Grass, folder, 0)
+	ball("HillTuft3", 2, Vector3.new(0, 8.7, -84), tuft, Enum.Material.Grass, folder, 0)
+	ball("HillTuft4", 2, Vector3.new(0, 8.7, -108), tuft, Enum.Material.Grass, folder, 0)
+	ball("HillTuft5", 2, Vector3.new(-13, 8.7, -84), tuft, Enum.Material.Grass, folder, 0)
+	ball("HillTuft6", 2, Vector3.new(13, 8.7, -108), tuft, Enum.Material.Grass, folder, 0)
+	local rock = Color3.fromRGB(110, 110, 110)
+	ball("HillRock1", 3, Vector3.new(-16, 1.8, -78), rock, Enum.Material.Rock, folder, 0)
+	ball("HillRock2", 3.5, Vector3.new(16, 2.05, -78), rock, Enum.Material.Rock, folder, 0)
+	ball("HillRock3", 2.5, Vector3.new(0, 1.55, -116), rock, Enum.Material.Rock, folder, 0)
+	local stone = Color3.fromRGB(200, 185, 140)
+	for _, z in ipairs({ -70, -55, -40, -25 }) do
+		decor("HillPath", Vector3.new(3, 0.2, 2), Vector3.new(0, 0.8, z), stone, Enum.Material.Slate, folder)
+	end
+end
+
+-- Shop dressing: a little stall — posts at the pad corners, a striped
+-- awning roof above, and a counter at the back of the pad.
+local function decorateShop(folder)
+	local wood = Color3.fromRGB(120, 85, 50)
+	decor("ShopPost1", Vector3.new(0.6, 5, 0.6), Vector3.new(-6.5, 3.7, 65.5), wood, Enum.Material.Wood, folder)
+	decor("ShopPost2", Vector3.new(0.6, 5, 0.6), Vector3.new(6.5, 3.7, 65.5), wood, Enum.Material.Wood, folder)
+	decor("ShopPost3", Vector3.new(0.6, 5, 0.6), Vector3.new(-6.5, 3.7, 78.5), wood, Enum.Material.Wood, folder)
+	decor("ShopPost4", Vector3.new(0.6, 5, 0.6), Vector3.new(6.5, 3.7, 78.5), wood, Enum.Material.Wood, folder)
+	local red = Color3.fromRGB(220, 60, 60)
+	local white = Color3.fromRGB(245, 245, 240)
+	for i = 0, 5 do
+		local colour = red
+		if i % 2 == 1 then colour = white end
+		decor("ShopAwning", Vector3.new(16, 0.4, 2.67), Vector3.new(0, 6.4, 65.33 + i * 2.67), colour, Enum.Material.SmoothPlastic, folder)
+	end
+	decor("ShopCounter", Vector3.new(10, 2, 2), Vector3.new(0, 2.2, 77.5), wood, Enum.Material.Wood, folder)
+end
+
+-- Island dressing: palm trees, scattered rocks, torches flanking the
+-- belt, and clouds drifting high above. All placed clear of bases,
+-- belt, volcano, lagoon, hill, shop and spawn.
+local function decorateIsland(folder)
+	local leaf = Color3.fromRGB(60, 170, 70)
+	local trunk = Color3.fromRGB(110, 80, 45)
+	for _, pos in ipairs({
+		Vector3.new(60, 0, -60),
+		Vector3.new(-60, 0, 60),
+		Vector3.new(130, 0, -45),
+		Vector3.new(-130, 0, 45),
+	}) do
+		decor("PalmTrunk", Vector3.new(1.2, 9, 1.2), pos + Vector3.new(0, 5.2, 0), trunk, Enum.Material.Wood, folder)
+		flatball("PalmLeaf", Vector3.new(6, 1.2, 2.5), pos + Vector3.new(2.5, 9.8, 0), leaf, Enum.Material.Grass, folder, 0)
+		flatball("PalmLeaf", Vector3.new(6, 1.2, 2.5), pos + Vector3.new(-2.5, 9.8, 0), leaf, Enum.Material.Grass, folder, 0)
+		flatball("PalmLeaf", Vector3.new(2.5, 1.2, 6), pos + Vector3.new(0, 9.8, 2.5), leaf, Enum.Material.Grass, folder, 0)
+		flatball("PalmLeaf", Vector3.new(2.5, 1.2, 6), pos + Vector3.new(0, 9.8, -2.5), leaf, Enum.Material.Grass, folder, 0)
+	end
+	local rock = Color3.fromRGB(110, 110, 110)
+	ball("IslandRock1", 4, Vector3.new(150, 2.3, 30), rock, Enum.Material.Rock, folder, 0)
+	ball("IslandRock2", 5, Vector3.new(-150, 2.8, -30), rock, Enum.Material.Rock, folder, 0)
+	ball("IslandRock3", 4, Vector3.new(30, 2.3, 150), rock, Enum.Material.Rock, folder, 0)
+	ball("IslandRock4", 3, Vector3.new(-30, 1.8, -150), rock, Enum.Material.Rock, folder, 0)
+	ball("IslandRock5", 3, Vector3.new(160, 1.8, -80), rock, Enum.Material.Rock, folder, 0)
+	ball("IslandRock6", 4, Vector3.new(-160, 2.3, 80), rock, Enum.Material.Rock, folder, 0)
+	local flame = Color3.fromRGB(255, 140, 30)
+	for _, pos in ipairs({
+		Vector3.new(-40, 0, -8),
+		Vector3.new(-40, 0, 8),
+		Vector3.new(40, 0, -8),
+		Vector3.new(40, 0, 8),
+	}) do
+		decor("TorchPost", Vector3.new(0.5, 3, 0.5), pos + Vector3.new(0, 2.2, 0), Color3.fromRGB(90, 65, 40), Enum.Material.Wood, folder)
+		ball("TorchFlame", 1.5, pos + Vector3.new(0, 4.3, 0), flame, Enum.Material.Neon, folder, 0)
+	end
+	local cloud = Color3.fromRGB(245, 245, 245)
+	flatball("Cloud1", Vector3.new(20, 6, 12), Vector3.new(0, 45, -60), cloud, Enum.Material.SmoothPlastic, folder, 0.3)
+	flatball("Cloud2", Vector3.new(16, 5, 10), Vector3.new(-80, 48, 40), cloud, Enum.Material.SmoothPlastic, folder, 0.3)
+	flatball("Cloud3", Vector3.new(18, 6, 11), Vector3.new(80, 42, -30), cloud, Enum.Material.SmoothPlastic, folder, 0.3)
+	flatball("Cloud4", Vector3.new(15, 5, 10), Vector3.new(30, 50, 80), cloud, Enum.Material.SmoothPlastic, folder, 0.3)
+	flatball("Cloud5", Vector3.new(17, 5, 10), Vector3.new(-40, 44, -100), cloud, Enum.Material.SmoothPlastic, folder, 0.3)
 end
 
 function WorldBuilder.build()
@@ -200,6 +433,15 @@ function WorldBuilder.build()
 	for i = 1, Config.Bases.count do
 		WorldBuilder.buildBase(i, WorldBuilder.basePositions[i])
 	end
+
+	-- Visual polish (decor only, all CanCollide=false): a richer
+	-- volcano, conveyor belt, lagoon, hill, shop and island dressing.
+	decorateVolcano(folder)
+	decorateBelt(folder)
+	decorateLagoon(folder)
+	decorateHill(folder)
+	decorateShop(folder)
+	decorateIsland(folder)
 
 	return folder
 end
