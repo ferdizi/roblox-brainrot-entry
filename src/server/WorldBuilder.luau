@@ -137,9 +137,21 @@ function WorldBuilder.build()
 	folder.Name = "KrakatoaIsland"
 	folder.Parent = workspace
 
-	-- The island itself: a big sandy disc on the baseplate.
-	part("Island", Vector3.new(220, 4, 220), Vector3.new(0, -2, 0), Color3.fromRGB(194, 178, 128), Enum.Material.Sand, folder)
-	part("IslandGrass", Vector3.new(190, 1, 190), Vector3.new(0, 0.2, 0), Color3.fromRGB(96, 160, 80), Enum.Material.Grass, folder)
+	-- The island itself: a big sandy disc rising out of the ocean.
+	-- The baseplate was lowered (default.project.json) so the ocean
+	-- shows: ocean top y=-2, sand top y=0, grass top y=0.7. The island
+	-- is 440 wide so every gameplay part (bases at radius 82, volcano
+	-- to x=-118, lagoon to x=124, hill to z=-114) sits well inside it.
+	part("Island", Vector3.new(440, 4, 440), Vector3.new(0, -2, 0), Color3.fromRGB(194, 178, 128), Enum.Material.Sand, folder)
+	part("IslandGrass", Vector3.new(400, 1, 400), Vector3.new(0, 0.2, 0), Color3.fromRGB(96, 160, 80), Enum.Material.Grass, folder)
+
+	-- The ocean: open water around the island, so the island reads as
+	-- a lagoon island instead of a disc on a grey plate. Non-colliding:
+	-- a player who walks off the island drops onto the lowered
+	-- baseplate just under the surface and can walk back up.
+	local ocean = part("Ocean", Vector3.new(512, 2, 512), Vector3.new(0, -3, 0), Color3.fromRGB(30, 120, 200), Enum.Material.Water, folder)
+	ocean.Transparency = 0.25
+	ocean.CanCollide = false
 
 	-- The lagoon: blue water at the east end of the belt.
 	local lagoon = part("Lagoon", Vector3.new(56, 1, 44), Vector3.new(96, 0.6, 0), Color3.fromRGB(40, 140, 220), Enum.Material.Water, folder)
