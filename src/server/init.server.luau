@@ -8,11 +8,11 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
-local State = require(script.Parent:WaitForChild("State"))
-local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
-local BrainrotServer = require(script.Parent:WaitForChild("BrainrotServer"))
-local StealServer = require(script.Parent:WaitForChild("StealServer"))
-local WaveServer = require(script.Parent:WaitForChild("WaveServer"))
+local State = require(script:WaitForChild("State"))
+local WorldBuilder = require(script:WaitForChild("WorldBuilder"))
+local BrainrotServer = require(script:WaitForChild("BrainrotServer"))
+local StealServer = require(script:WaitForChild("StealServer"))
+local WaveServer = require(script:WaitForChild("WaveServer"))
 
 print("BRAINROT KRAKATOA starting: building the island...")
 
