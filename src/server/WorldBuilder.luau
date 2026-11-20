@@ -60,11 +60,16 @@ local function part(name, size, position, colour, material, parent, anchored)
 	return p
 end
 
-local function label(parent, text, colour, size)
+-- Small text signs only: the old 220x52 gui at +5 studs floated huge
+-- text over the whole street. A sign now sits ON its board (offset 0),
+-- renders at a fixed small pixel size with a real TextSize, and
+-- vanishes past 60 studs so far signs never stack up on screen.
+local function label(parent, text, colour, size, widthPx)
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "Sign"
-	gui.Size = UDim2.fromOffset(220, 52)
-	gui.StudsOffsetWorldSpace = Vector3.new(0, 5, 0)
+	gui.Size = UDim2.fromOffset(widthPx or 120, 28)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, 0, 0)
+	gui.MaxDistance = 60
 	gui.AlwaysOnTop = false
 	gui.Parent = parent
 	local t = Instance.new("TextLabel")
@@ -73,7 +78,8 @@ local function label(parent, text, colour, size)
 	t.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
 	t.TextColor3 = colour or Color3.fromRGB(255, 255, 255)
 	t.Text = text
-	t.TextScaled = true
+	t.TextScaled = false
+	t.TextSize = size or 14
 	t.Font = Enum.Font.SourceSansBold
 	t.Parent = gui
 	return gui
@@ -198,7 +204,7 @@ function WorldBuilder.buildBase(index, centre)
 
 	-- Neon sign board above the back wall, in the stall's accent.
 	local signBoard = decor("SignBoard", Vector3.new(10, 2.5, 0.5), backPos + Vector3.new(0, 7.2, 0), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
-	label(signBoard, "BASE " .. tostring(index), accent, 24)
+	label(signBoard, "BASE " .. tostring(index), accent, 14)
 	decorR("SignTrim", Vector3.new(10, 0.4, 0.6), backPos + Vector3.new(0, 5.9, 0), accent, Enum.Material.Neon, folder, yaw)
 
 	-- The lock gate: a bright bar across the open front while locked.
@@ -309,7 +315,7 @@ local function decorateArch(folder)
 	decor("ArchPostTrimN", Vector3.new(1.7, 0.5, 1.7), Vector3.new(0, 13.5, -13), pink, Enum.Material.Neon, folder)
 	decor("ArchPostTrimS", Vector3.new(1.7, 0.5, 1.7), Vector3.new(0, 13.5, 13), cyan, Enum.Material.Neon, folder)
 	local beam = decor("ArchBeam", Vector3.new(2, 3, 28), Vector3.new(0, 14.5, 0), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
-	label(beam, "BRAINROT BAZAAR", Color3.fromRGB(255, 220, 60), 28)
+	label(beam, "BRAINROT BAZAAR", Color3.fromRGB(255, 220, 60), 16, 200)
 	decor("ArchBeamTrim", Vector3.new(2.2, 0.4, 28), Vector3.new(0, 13, 0), pink, Enum.Material.Neon, folder)
 	-- A row of little neon bulbs along the top of the beam.
 	for i = 0, 8 do
@@ -331,7 +337,14 @@ local function decorateStalls(folder)
 		Color3.fromRGB(255, 220, 60),
 		Color3.fromRGB(170, 90, 255),
 	}
-	local stallNames = { "RAMEN", "TOYS", "CANDY", "NOODLES" }
+	-- Only two stall names survive: the other six signs stacked over
+	-- the whole street in the Studio screenshot, so they are deleted,
+	-- not hidden. Each kept board sits ON its stall awning (awning top
+	-- y=6.05; board bottom 5.3 / 5.7) at its own height.
+	local keptStallSigns = {
+		[2] = { "TOYS", 6.3 }, -- (-40, -16), north side
+		[8] = { "NOODLES", 6.7 }, -- (80, 16), south side, 124 studs away
+	}
 	local n = 0
 	for _, side in ipairs({ -1, 1 }) do
 		for _, x in ipairs(stallXs) do
@@ -356,8 +369,11 @@ local function decorateStalls(folder)
 			-- Warm lamp under the awning, so the stall and its counter read at night.
 			local stallLamp = decor("StallLamp", Vector3.new(1, 0.4, 1), Vector3.new(x, 5, z), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder)
 			light(stallLamp, Color3.fromRGB(255, 200, 130), 12, 1.2)
-			local sign = decor("StallSign", Vector3.new(5, 2, 0.4), Vector3.new(x, 7.2, z), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
-			label(sign, stallNames[((n - 1) % #stallNames) + 1], accent, 20)
+			local kept = keptStallSigns[n]
+			if kept then
+				local sign = decor("StallSign", Vector3.new(5, 2, 0.4), Vector3.new(x, kept[2], z), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
+				label(sign, kept[1], accent, 13)
+			end
 			-- Steam puff above the counter (uniform ball, transparent).
 			ball("StallSteam", 3, Vector3.new(x + 2, 4.5, z), Color3.fromRGB(230, 230, 235), Enum.Material.SmoothPlastic, folder, 0.6)
 		end
@@ -398,24 +414,11 @@ local function decorateStringLights(folder)
 	end
 end
 
--- Hanging neon signs on the outer sidewalk edge, and paper lanterns
--- (uniform balls) floating above the sidewalks.
-local function decorateSignsAndLanterns(folder)
-	local signData = {
-		{ -90, -24, "SUSHI", Color3.fromRGB(255, 60, 180) },
-		{ -30, -24, "BOBA", Color3.fromRGB(60, 220, 255) },
-		{ 30, -24, "ARCADE", Color3.fromRGB(255, 220, 60) },
-		{ 90, -24, "PLUSH", Color3.fromRGB(170, 90, 255) },
-		{ -90, 24, "TACO", Color3.fromRGB(255, 220, 60) },
-		{ -30, 24, "KTV", Color3.fromRGB(255, 60, 180) },
-		{ 30, 24, "MOCHI", Color3.fromRGB(60, 220, 255) },
-		{ 90, 24, "FIGURES", Color3.fromRGB(170, 90, 255) },
-	}
-	for _, s in ipairs(signData) do
-		decor("HangPole", Vector3.new(0.4, 7, 0.4), Vector3.new(s[1], 4, s[2]), Color3.fromRGB(60, 60, 75), Enum.Material.Metal, folder)
-		local board = decor("HangSign", Vector3.new(4, 3, 0.3), Vector3.new(s[1], 8.2, s[2]), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
-		label(board, s[3], s[4], 20)
-	end
+-- Paper lanterns (uniform balls) floating above the sidewalks.
+-- The eight hanging food signs (SUSHI, BOBA, ARCADE, PLUSH, TACO,
+-- KTV, MOCHI, FIGURES) used to live here: deleted entirely, they
+-- stacked over the whole street in the Studio screenshot.
+local function decorateLanterns(folder)
 	local lanternCols = {
 		Color3.fromRGB(255, 60, 180),
 		Color3.fromRGB(255, 220, 60),
@@ -468,8 +471,8 @@ local function decorateShop(folder)
 	end
 	decor("ShopCounter", Vector3.new(10, 2, 2), Vector3.new(0, 2.2, 77.5), wood, Enum.Material.Wood, folder)
 	decor("ShopCounterTop", Vector3.new(10.4, 0.3, 2.4), Vector3.new(0, 3.3, 77.5), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder)
-	local sign = decor("ShopSign", Vector3.new(8, 2, 0.4), Vector3.new(0, 7.6, 72), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
-	label(sign, "SHOP", Color3.fromRGB(255, 220, 60), 20)
+	local sign = decor("ShopSign", Vector3.new(8, 2, 0.4), Vector3.new(0, 7.2, 72), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
+	label(sign, "SHOP", Color3.fromRGB(255, 220, 60), 14)
 end
 
 -- A giant wave silhouette in the far distance at the west end: a tall
@@ -558,22 +561,22 @@ function WorldBuilder.build()
 	-- (0, 15, -96) — the spot WaveServer treats as safe.
 	part("PlazaBase", Vector3.new(36, 8, 36), Vector3.new(0, 4, -96), Color3.fromRGB(30, 30, 48), Enum.Material.Slate, folder)
 	part("PlazaTop", Vector3.new(22, 6, 22), Vector3.new(0, 11, -96), Color3.fromRGB(38, 38, 58), Enum.Material.Slate, folder)
-	local plazaTop = part("PlazaPad", Vector3.new(20, 1, 20), Vector3.new(0, 14.5, -96), Color3.fromRGB(48, 48, 70), Enum.Material.Slate, folder)
-	label(plazaTop, "SAFE PLAZA", Color3.fromRGB(255, 255, 255), 24)
+	part("PlazaPad", Vector3.new(20, 1, 20), Vector3.new(0, 14.5, -96), Color3.fromRGB(48, 48, 70), Enum.Material.Slate, folder)
+	-- (No SAFE PLAZA label: it floated over the plaza and stacked with the other signs.)
 
 	-- The belt: the runway brainrots walk, west end to east end.
 	-- Its centre and end pads come from Config.Belt, so the part, the
 	-- spawn point and the walk code can never disagree about its ends.
 	local beltStart = Config.Belt.startX
 	local beltEnd = beltStart + Config.Belt.length
-	local belt = part("Belt", Vector3.new(Config.Belt.length, 1, Config.Belt.width), Vector3.new(beltStart + Config.Belt.length / 2, 0.7, 0), Color3.fromRGB(40, 40, 55), Enum.Material.Concrete, folder)
-	label(belt, "BRAINROT BELT - hold E or click a brainrot to buy it", Color3.fromRGB(255, 240, 120), 20)
+	part("Belt", Vector3.new(Config.Belt.length, 1, Config.Belt.width), Vector3.new(beltStart + Config.Belt.length / 2, 0.7, 0), Color3.fromRGB(40, 40, 55), Enum.Material.Concrete, folder)
+	-- (No belt label: the old "BRAINROT BELT - hold E..." text floated over the whole street.)
 	part("BeltStart", Vector3.new(8, 1.4, 10), Vector3.new(beltStart, 0.9, 0), Color3.fromRGB(255, 120, 40), Enum.Material.Neon, folder)
 	part("BeltEnd", Vector3.new(8, 1.4, 10), Vector3.new(beltEnd, 0.9, 0), Color3.fromRGB(60, 160, 255), Enum.Material.Neon, folder)
 
 	-- The shop pad: where upgrades are bought (the HUD buttons do it too).
-	local shop = part("ShopPad", Vector3.new(14, 1, 14), Vector3.new(0, 0.7, 72), Color3.fromRGB(255, 200, 60), Enum.Material.SmoothPlastic, folder)
-	label(shop, "SHOP - upgrades & rebirth in the HUD", Color3.fromRGB(60, 40, 0), 20)
+	part("ShopPad", Vector3.new(14, 1, 14), Vector3.new(0, 0.7, 72), Color3.fromRGB(255, 200, 60), Enum.Material.SmoothPlastic, folder)
+	-- (No pad label: the kiosk SHOP sign above is the only shop sign.)
 
 	-- Spawn point near the shop, facing the belt.
 	local spawn = Instance.new("SpawnLocation")
@@ -596,7 +599,7 @@ function WorldBuilder.build()
 	decorateArch(folder)
 	decorateStalls(folder)
 	decorateStringLights(folder)
-	decorateSignsAndLanterns(folder)
+	decorateLanterns(folder)
 	decoratePlaza(folder)
 	decorateShop(folder)
 	decorateWaveSilhouette(folder)

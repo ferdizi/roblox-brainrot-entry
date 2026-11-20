@@ -2,8 +2,8 @@
 -- A LocalScript: it only paints what the server announces or snapshots.
 -- The mythic banner sits below the wave banner area (y ~160); the
 -- RICHEST panel sits on the left edge below the rarity legend
--- (y 456..606), clear of the Roblox top-left menu, Ui's contracts
--- button (y 200..244) and the legend (y 256..446). Screen shake runs
+-- (y 384..514), clear of the Roblox top-left menu, Ui's contracts
+-- button (y 200..244) and the legend (y 252..376). Screen shake runs
 -- only while wavePhase == "wave".
 
 local Players = game:GetService("Players")
@@ -28,26 +28,26 @@ gui.ResetOnSpawn = false
 gui.DisplayOrder = -1
 gui.Parent = playerGui
 
--- Big top-centre banner, below the wave banner area.
+-- Big top-centre banner, below the wave banner area. ONE label, one
+-- font (GothamBold), NO UIStroke on the text: a stroke on a
+-- TextLabel outlines the glyphs and renders as a bold/garbled
+-- double image. It never shows the wave countdown — that lives only
+-- in Ui's WaveBanner — so the two can never stack.
 local banner = Instance.new("TextLabel")
 banner.Name = "AnnounceBanner"
-banner.Size = UDim2.new(0, 560, 0, 52)
-banner.Position = UDim2.new(0.5, -280, 0, 160)
+banner.Size = UDim2.new(0, 520, 0, 40)
+banner.Position = UDim2.new(0.5, -260, 0, 160)
 banner.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
-banner.BackgroundTransparency = 0.15
+banner.BackgroundTransparency = 0.4
 banner.TextColor3 = Color3.fromRGB(255, 255, 255)
-banner.TextSize = 22
-banner.Font = Enum.Font.SourceSansBold
+banner.TextSize = 20
+banner.Font = Enum.Font.GothamBold
 banner.TextWrapped = true
 banner.Visible = false
 banner.Parent = gui
 local bannerCorner = Instance.new("UICorner")
 bannerCorner.CornerRadius = UDim.new(0, 8)
 bannerCorner.Parent = banner
-local bannerStroke = Instance.new("UIStroke")
-bannerStroke.Color = Color3.fromRGB(255, 210, 60)
-bannerStroke.Thickness = 2
-bannerStroke.Parent = banner
 
 -- A token so a newer banner can't be hidden by an older one's timer.
 local bannerToken = 0
@@ -81,12 +81,14 @@ announce.OnClientEvent:Connect(function(data)
 end)
 
 -- RICHEST leaderboard panel, left edge below the rarity legend.
+-- Small on purpose (170 wide) and 40% transparent, like the rest
+-- of the side panels, so the 3D world stays visible.
 local panel = Instance.new("Frame")
 panel.Name = "LeadersPanel"
-panel.Position = UDim2.new(0, 12, 0, 456)
-panel.Size = UDim2.new(0, 210, 0, 150)
+panel.Position = UDim2.new(0, 12, 0, 384)
+panel.Size = UDim2.new(0, 170, 0, 130)
 panel.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
-panel.BackgroundTransparency = 0.25
+panel.BackgroundTransparency = 0.4
 panel.Parent = gui
 local panelCorner = Instance.new("UICorner")
 panelCorner.CornerRadius = UDim.new(0, 8)
@@ -98,25 +100,25 @@ panelStroke.Parent = panel
 
 local title = Instance.new("TextLabel")
 title.Name = "Title"
-title.Size = UDim2.new(1, 0, 0, 28)
+title.Size = UDim2.new(1, 0, 0, 24)
 title.BackgroundTransparency = 1
 title.Text = "RICHEST"
 title.TextColor3 = Color3.fromRGB(255, 240, 120)
-title.TextSize = 18
-title.Font = Enum.Font.SourceSansBold
+title.TextSize = 15
+title.Font = Enum.Font.GothamBold
 title.Parent = panel
 
 local rows = {}
 for i = 1, 5 do
 	local row = Instance.new("TextLabel")
 	row.Name = "Leader_" .. tostring(i)
-	row.Size = UDim2.new(1, -12, 0, 22)
-	row.Position = UDim2.new(0, 6, 0, 30 + (i - 1) * 24)
+	row.Size = UDim2.new(1, -12, 0, 18)
+	row.Position = UDim2.new(0, 6, 0, 26 + (i - 1) * 20)
 	row.BackgroundTransparency = 1
 	row.Text = ""
 	row.TextColor3 = Color3.fromRGB(255, 255, 255)
-	row.TextSize = 15
-	row.Font = Enum.Font.SourceSansBold
+	row.TextSize = 13
+	row.Font = Enum.Font.GothamBold
 	row.TextXAlignment = Enum.TextXAlignment.Left
 	row.Parent = panel
 	rows[i] = row

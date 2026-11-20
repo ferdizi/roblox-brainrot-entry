@@ -20,6 +20,9 @@ BrainrotServer.remotes = nil
 local walking = {}
 -- Owned models' rest CFrame (pedestal), so the idle loop never drifts.
 local idleBase = {}
+-- Showcase models pre-placed by preplaceShowcase, keyed "base:slot"
+-- ("1:3" = base 1, slot 3); a real purchase clears its slot's model.
+local displayModels = {}
 
 -- Play a SoundService sound by name; a sound that fails to load must
 -- never error the spawner, so the Play is pcall-guarded.
@@ -187,6 +190,14 @@ local function buildModelInner(entry)
 		part("Leg", legSize, Vector3.new(sx * legX, legY, 0), darkColour)
 	end
 
+	-- Neon shoes in the rarity colour, so the feet read at dusk.
+	-- (Lil Wobblecone rides a skateboard instead: no shoes.)
+	if id ~= "lil-wobblecone" then
+		for _, sx in ipairs({ -1, 1 }) do
+			part("Shoe", Vector3.new(1.2, 0.5, 1.4), Vector3.new(sx * legX, -1.25, 0), rarityColour, Enum.PartType.Block, Enum.Material.Neon)
+		end
+	end
+
 	-- Arms stick out of the body's sides so it reads as a character.
 	-- (Sir Crustacio's arms are claw Balls: uniform 1.6 size.)
 	local armX = bodyW / 2 + 0.45
@@ -217,7 +228,9 @@ local function buildModelInner(entry)
 	-- Eyes on the front face of the head, with pupils.
 	local eyeZ = headD / 2 + 0.1
 	if headShape == Enum.PartType.Ball then
-		eyeZ = headD / 2 - 0.15
+		-- Ball heads curve away at eye height: +0.05 keeps the eyes
+		-- proud of the face instead of buried inside the ball.
+		eyeZ = headD / 2 + 0.05
 	end
 	local eyeW, eyeH = 0.55 * eyeScale, 0.75 * eyeScale
 	for _, x in ipairs({ -0.62, 0.62 }) do
@@ -327,6 +340,11 @@ local function buildModelInner(entry)
 		part("GlitchCube", Vector3.new(0.7, 0.7, 0.7), Vector3.new(0, 3.6, -3.4), Color3.fromRGB(255, 240, 90), Enum.PartType.Block, Enum.Material.Neon)
 	end
 
+	-- Rarity glow disc under the feet: a flat Neon disc in the rarity
+	-- colour, sitting on the floor (local y -1.5..-1.3), so the
+	-- character reads at dusk from across the street.
+	part("GlowDisc", Vector3.new(0.2, 5, 5), Vector3.new(0, -1.4, 0), rarityColour, Enum.PartType.Cylinder, Enum.Material.Neon, CFrame.Angles(0, 0, math.pi / 2), 0.3)
+
 	-- Invisible Root part at the model origin (local y=0) as the
 	-- PrimaryPart: the model pivots on it, so every PivotTo target
 	-- lands the feet (local y=-1.5) on the floor: belt y=2.7 -> feet
@@ -394,13 +412,19 @@ local function buildModelInner(entry)
 	idle.Value = idleType
 	idle.Parent = model
 
-	-- Floating label: name, rarity, mutation and $/second.
+	-- Floating label: name, rarity, mutation and $/second. Small and
+	-- distance-limited (MaxDistance 40) so the 3D body, not the text,
+	-- is what reads from across the street. The Adornee MUST be the
+	-- Body part: a BillboardGui anchored to the Model itself never
+	-- renders (a Model is not a valid anchor).
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "BrainrotLabel"
-	gui.Size = UDim2.fromOffset(150, 56)
-	gui.StudsOffsetWorldSpace = Vector3.new(0, 9.2, 0)
+	gui.Size = UDim2.fromOffset(110, 40)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, 8.5, 0)
 	gui.AlwaysOnTop = false
-	gui.Parent = model
+	gui.MaxDistance = 40
+	gui.Adornee = body
+	gui.Parent = body
 	local nameLabel = Instance.new("TextLabel")
 	nameLabel.Name = "Name"
 	nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
@@ -440,6 +464,106 @@ function BrainrotServer.buildModel(entry)
 		return nil
 	end
 	return model
+end
+
+-- Showcase entry: a plain (Normal mutation) entry for one cast member,
+-- the shape buildModelInner expects.
+local function showcaseEntry(castId)
+	for _, cast in ipairs(Config.Cast) do
+		if cast.id == castId then
+			return {
+				castId = cast.id,
+				name = cast.name,
+				rarity = cast.rarity,
+				rate = cast.rate,
+				mutation = "Normal",
+				mutationMult = 1,
+				colour = cast.colour,
+				hat = cast.hat,
+			}
+		end
+	end
+	return nil
+end
+
+-- Where a showcase model stands on a base slot, found at runtime from
+-- the pad part WorldBuilder built (BaseN folder, "SlotN" part): the
+-- pivot sits 1.5 (feet offset) above the pad top. Falls back to
+-- WorldBuilder.slotPosition, the same math a real purchase uses.
+local function pedestalPivot(baseIndex, slot)
+	local base = workspace:FindFirstChild("Base" .. tostring(baseIndex))
+	local pad = base and base:FindFirstChild("Slot" .. tostring(slot))
+	if pad and pad:IsA("BasePart") then
+		return CFrame.new(pad.Position + Vector3.new(0, pad.Size.Y / 2 + 1.5, 0))
+	end
+	return CFrame.new(WorldBuilder.slotPosition(baseIndex, slot))
+end
+
+-- Place one display-only model: built like any brainrot, then stripped
+-- of its buy prompt and click (never for sale, never stealable, earns
+-- nothing, in no State table, so no loop ever moves it and no wave
+-- ever washes it away). key registers it for auto-clear when a real
+-- purchase takes its slot.
+local function placeShowcase(entry, cframe, key)
+	local model = BrainrotServer.buildModel(entry)
+	if not model then
+		return
+	end
+	local prompt = model:FindFirstChild("BuyPrompt", true)
+	if prompt then
+		prompt:Destroy()
+	end
+	local click = model:FindFirstChild("BuyClick", true)
+	if click then
+		click:Destroy()
+	end
+	model:PivotTo(cframe)
+	model.Parent = workspace
+	if key then
+		displayModels[key] = model
+	end
+end
+
+-- Pre-place visible characters so the game opens with bodies in view
+-- instead of an empty belt: six (one per rarity) on the first
+-- player's base pedestals, slots 1-6 of base 1 (back + middle rows,
+-- feet exactly on the pad tops, pivot y=2.9 -> feet 1.4), facing +Z
+-- out of the stall's open front toward the street; and four on the
+-- belt near the spawn (x -14, -6, 8, 14, z +2 on the spawn side, off
+-- the walkers' centre line, clear of the rollers at x -22/-2/18 and
+-- the chevrons at x 0), feet exactly on the belt (pivot y=2.7 ->
+-- feet 1.2), facing +Z toward the spawn. Runs once at server start;
+-- WorldBuilder.build() has already run by then (init.server).
+function BrainrotServer.preplaceShowcase()
+	local pedestalCast = {
+		"soggy-toastino", -- Common
+		"captain-noodlebeard", -- Rare
+		"sir-crustacio", -- Epic
+		"turbo-tungtung", -- Legendary
+		"glorpo-ghost-burger", -- Mythic
+		"blobfather", -- Secret
+	}
+	for slot, castId in ipairs(pedestalCast) do
+		local entry = showcaseEntry(castId)
+		if entry then
+			placeShowcase(entry, pedestalPivot(1, slot), "1:" .. tostring(slot))
+		end
+	end
+
+	local beltCast = {
+		"bonk-pigeon", -- Common
+		"lil-wobblecone", -- Rare
+		"madame-flamingatto", -- Epic
+		"baron-vroomvroom", -- Mythic
+	}
+	local beltX = { -14, -6, 8, 14 }
+	for i, castId in ipairs(beltCast) do
+		local entry = showcaseEntry(castId)
+		if entry then
+			local pos = WorldBuilder.beltPosition(beltX[i] - Config.Belt.startX)
+			placeShowcase(entry, CFrame.new(pos + Vector3.new(0, 0, 2)))
+		end
+	end
 end
 
 -- Walk a model from where it is to a target position, in small steps,
@@ -629,6 +753,15 @@ function BrainrotServer.buyBrainrot(player, uid)
 
 	-- Waddle home to its slot, then settle on the pad.
 	local target = WorldBuilder.slotPosition(data.baseIndex, slot)
+	-- A showcase model on this slot steps aside for a real purchase.
+	local showcaseKey = data.baseIndex .. ":" .. tostring(slot)
+	local showcase = displayModels[showcaseKey]
+	if showcase then
+		displayModels[showcaseKey] = nil
+		pcall(function()
+			showcase:Destroy()
+		end)
+	end
 	task.spawn(function()
 		BrainrotServer.walkModelTo(entry.model, target)
 	end)
@@ -680,7 +813,15 @@ function BrainrotServer.collectIncome()
 							gui.Size = UDim2.fromOffset(80, 28)
 							gui.StudsOffsetWorldSpace = Vector3.new(0, 9.5, 0)
 							gui.AlwaysOnTop = true
-							gui.Parent = model
+							-- Same anchor rule as the name label: the
+							-- Adornee must be a BasePart, not the Model.
+							local anchor = model:FindFirstChild("Body")
+							if anchor then
+								gui.Adornee = anchor
+								gui.Parent = anchor
+							else
+								gui.Parent = model
+							end
 							local label = Instance.new("TextLabel")
 							label.Size = UDim2.fromScale(1, 1)
 							label.BackgroundTransparency = 1
@@ -882,6 +1023,7 @@ end
 
 function BrainrotServer.start(remotes)
 	BrainrotServer.bindRemotes(remotes)
+	BrainrotServer.preplaceShowcase()
 	BrainrotServer.startSpawner()
 	BrainrotServer.startBeltWalk()
 	task.spawn(function()
