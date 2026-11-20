@@ -528,7 +528,7 @@ function WorldBuilder.build()
 	local beltStart = Config.Belt.startX
 	local beltEnd = beltStart + Config.Belt.length
 	local belt = part("Belt", Vector3.new(Config.Belt.length, 1, Config.Belt.width), Vector3.new(beltStart + Config.Belt.length / 2, 0.7, 0), Color3.fromRGB(40, 40, 55), Enum.Material.Concrete, folder)
-	label(belt, "BRAINROT BELT - click a brainrot to buy it", Color3.fromRGB(255, 240, 120), 20)
+	label(belt, "BRAINROT BELT - hold E or click a brainrot to buy it", Color3.fromRGB(255, 240, 120), 20)
 	part("BeltStart", Vector3.new(8, 1.4, 10), Vector3.new(beltStart, 0.9, 0), Color3.fromRGB(255, 120, 40), Enum.Material.Neon, folder)
 	part("BeltEnd", Vector3.new(8, 1.4, 10), Vector3.new(beltEnd, 0.9, 0), Color3.fromRGB(60, 160, 255), Enum.Material.Neon, folder)
 
