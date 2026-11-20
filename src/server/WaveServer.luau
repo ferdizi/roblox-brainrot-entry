@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: the tsunami.
+-- BRAINROT BAZAAR: the wave.
 -- The clock the whole server lives by. A cycle of calm, warning and
 -- wave, about every ninety seconds. The warning is the interesting
 -- part: Glitch-mutation brainrots only roll while it is live, so the
@@ -40,8 +40,8 @@ local function isSafePosition(player, position)
 	if baseCentre and (position - baseCentre).Magnitude < 12 then
 		return true
 	end
-	local hill = Vector3.new(0, 15, -96)
-	if (position - hill).Magnitude < 16 then
+	local plaza = Vector3.new(0, 15, -96)
+	if (position - plaza).Magnitude < 16 then
 		return true
 	end
 	return false
@@ -49,7 +49,7 @@ end
 
 -- The wave wall: a giant hot-pink GOO/SAUCE wall (Neon, slightly
 -- transparent) with 3 drip spheres hanging off its bottom edge, that
--- sweeps the belt from the volcano end to the lagoon end, washing the
+-- sweeps the belt from the west end to the east end, washing the
 -- belt clean. Its path comes from Config.Belt, the same numbers the
 -- belt itself uses.
 function WaveServer.runWaveWall()
@@ -129,7 +129,7 @@ function WaveServer.strikeWave()
 					BrainrotServer.checkContracts(player)
 				else
 					-- Caught in the open: thrown back and fined 10% of cash.
-					-- The push is horizontal, away from the island centre;
+					-- The push is horizontal, away from the bazaar centre;
 					-- a player standing on the centre line gets pushed
 					-- south instead of a zero-length direction erroring.
 					local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
@@ -152,7 +152,7 @@ end
 WaveServer.onWaveDrop = nil
 
 -- Reviewer shortcut, used by TOUR.json only: jump the calm straight
--- to its warning, so a reviewer can reach the tsunami screen without
+-- to its warning, so a reviewer can reach the wave screen without
 -- waiting out a full calm. It changes no money, brainrot or lock.
 WaveServer.skipRequested = false
 function WaveServer.skipToWarning(_arg)

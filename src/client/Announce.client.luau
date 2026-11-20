@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: mythic/warning banner, richest leaderboard, wave shake.
+-- BRAINROT BAZAAR: mythic/warning banner, richest leaderboard, wave shake.
 -- A LocalScript: it only paints what the server announces or snapshots.
 -- The mythic banner sits below the wave banner area (y ~160); the
 -- RICHEST panel sits on the left edge below the contracts button
@@ -12,7 +12,7 @@ local RunService = game:GetService("RunService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
-local remotes = ReplicatedStorage:WaitForChild("KrakatoaRemotes")
+local remotes = ReplicatedStorage:WaitForChild("BazaarRemotes")
 local announce = remotes:WaitForChild("Announce")
 local stateSync = remotes:WaitForChild("StateSync")
 
@@ -163,4 +163,4 @@ RunService.RenderStepped:Connect(function()
 	end)
 end)
 
-print("BRAINROT KRAKATOA announce client ready.")
+print("BRAINROT BAZAAR announce client ready.")

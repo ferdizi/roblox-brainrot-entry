@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: one shared table of truth for the whole game.
+-- BRAINROT BAZAAR: one shared table of truth for the whole game.
 -- Every number the judge (or a player) cares about lives here: the cast,
 -- the rarity ladder, mutation multipliers, wave timings, upgrade costs.
 -- Server and client both require this module, so a price shown on the
@@ -145,7 +145,7 @@ Config.RarityColour = {
 }
 
 -- Mutations. A brainrot is born with one; the multiplier applies to rate.
--- Glitch only rolls while a tsunami warning is live, which makes warnings
+-- Glitch only rolls while a wave warning is live, which makes warnings
 -- worth watching instead of worth hiding from.
 Config.Mutations = {
 	{ id = "Normal", mult = 1, weight = 80, colour = Color3.fromRGB(230, 230, 230) },
@@ -156,11 +156,11 @@ Config.Mutations = {
 }
 
 -- The belt: where brainrots walk before someone buys them.
--- The belt starts clear of the volcano rock (its east edge is x=-74)
--- and runs east into the lagoon, so a brainrot is visible the whole way.
+-- The belt runs down the middle of the street, west to east, so a
+-- brainrot is visible the whole way.
 Config.Belt = {
-	startX = -70, -- studs: west end of the belt, just east of the volcano
-	length = 170, -- studs, from the volcano end to the lagoon end
+	startX = -70, -- studs: west end of the belt
+	length = 170, -- studs, from the west end to the east end
 	width = 8,
 	maxOnBelt = 8,
 	spawnEvery = 4, -- seconds between spawns while the belt has room
@@ -179,12 +179,12 @@ Config.Bases = {
 	slotSpacing = 5,
 }
 
--- The tsunami: a cycle the whole server lives by.
+-- The wave: a cycle the whole server lives by.
 Config.Wave = {
 	calmSeconds = 60,
 	warningSeconds = 10,
 	waveSeconds = 6,
-	knockbackCashLoss = 0.10, -- caught outside a base or the hill: lose 10% of cash
+	knockbackCashLoss = 0.10, -- caught outside a base or the safe plaza: lose 10% of cash
 }
 
 -- Stealing and defending a base.
@@ -216,7 +216,7 @@ Config.Upgrades = {
 Config.Contracts = {
 	{ id = "buy3", name = "Buy 3 brainrots", goal = 3, reward = 500 },
 	{ id = "earn1000", name = "Earn $1,000 in total", goal = 1000, reward = 750 },
-	{ id = "survive2", name = "Survive 2 tsunamis", goal = 2, reward = 1000 },
+	{ id = "survive2", name = "Survive 2 waves", goal = 2, reward = 1000 },
 }
 
 -- Pick one cast member by spawn weight.

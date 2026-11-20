@@ -1,4 +1,4 @@
-# STUDIO_GUIDE.md — Publish BRAINROT KRAKATOA (for Gadiel, on Windows/Mac)
+# STUDIO_GUIDE.md — Publish Brainrot Bazaar (for Gadiel, on Windows/Mac)
 
 You are the only one who can do these steps: they need Roblox Studio on your
 computer and your Roblox account. Do them in order. Deadline: Fri 20 Nov 2026,
@@ -15,24 +15,30 @@ computer and your Roblox account. Do them in order. Deadline: Fri 20 Nov 2026,
 ## 1. Open and play-test
 
 1. Open Roblox Studio → open `game.rbxl` from the cloned repo.
-2. Press **Play** (F5). You should spawn near the shop pad on a sandy island:
-   a volcano on the west end, a lagoon on the east, a belt running between them,
-   8 bases in a ring (turned half a step, so none sits on the belt or the volcano),
-   and brainrots walking the belt within a few seconds, standing on it — not sunk into it.
-3. Click a brainrot on the belt to buy it — it should waddle to your base and your
-   money should start ticking up in the top-right HUD. Tapping its row in the belt
-   list on the right buys it too. The Upgrades panel (U) now shows each upgrade's
-   next price, and the LOCK button shows locked / cooldown seconds.
-4. Watch the top-centre banner: a tsunami warning comes about every 90 seconds.
-   (TOUR.json can jump straight to a warning for the 3-tsunami.png shot, via
-   `WaveServer.skipToWarning` — reviewers only, it changes no money.)
+2. Press **Play** (F5). You should spawn on a neon night-market street: a conveyor
+   belt running down the middle, 6 market-stall bases (3 north, 3 south) with neon
+   signs and glowing pedestals, a "BRAINROT BAZAAR" arch, string lights, a safe
+   plaza to the north, and brainrots walking the belt within a few seconds,
+   standing on it — not sunk into it. Each one bobs, bounces or spins, with a
+   name tag and "$/s" label in its rarity colour.
+3. Walk up to a brainrot on the belt and hold **E** to buy it (or click it, or tap
+   its row in the belt list on the right) — it should waddle to a pedestal on your
+   base, your money should start ticking up in the top-right HUD, and a floating
+   "+$" popup should appear above it every second. The Upgrades panel (U) now
+   shows each upgrade's next price (including Faster Conveyor), and the LOCK button
+   shows locked / cooldown seconds. The left edge shows the RARITY LEGEND and the
+   RICHEST leaderboard.
+4. Watch the top-centre banner: a Brainrot Wave warning comes about every 90 seconds
+   (10s, siren + countdown). Then a giant hot-pink goo wall sweeps the street and the
+   camera shakes. (TOUR.json can jump straight to a warning for the 3-wave.png shot,
+   via `WaveServer.skipToWarning` — reviewers only, it changes no money.)
 5. Press **Stop** when you are happy it runs. If anything errors, check the Output
    window and tell the agent the exact error line.
 
 ## 2. Publish as a NEW Public experience
 
 1. In Studio: **File → Publish to Roblox As…** → **Create new experience**.
-2. Name it **BRAINROT KRAKATOA — Tsunami Steal**. (Do not reuse the Coin Rush place.)
+2. Name it **Brainrot Bazaar**. (Do not reuse the Coin Rush place.)
 3. Fill in a description and a genre when Roblox asks. **Important:** put your
    make.fun play code in the description. Get it with this command (from the kit
    folder, after signing in — the agent will run it for you at submit time):
@@ -49,7 +55,7 @@ computer and your Roblox account. Do them in order. Deadline: Fri 20 Nov 2026,
    - **universe_id**: the number after `experiences/` in the experience's address
      on the Creator Dashboard (or `game.GameId` in Studio — NOT `game.PlaceId`).
 7. Edit `PLAY.json` in the repo to:
-   `{"url": "https://www.roblox.com/games/<place_id>/BRAINROT-KRAKATOA-Tsunami-Steal", "place_id": <place_id>, "universe_id": <universe_id>}`
+   `{"url": "https://www.roblox.com/games/<place_id>/Brainrot-Bazaar", "place_id": <place_id>, "universe_id": <universe_id>}`
 
 ## 3. Take the 4 screenshots (in Studio, game running)
 
@@ -59,13 +65,15 @@ clear of the top-left corner (Roblox's own menu buttons sit there). Take each
 shot while the game is running — if Studio loses focus the game can pause, so
 use Studio's own screenshot (or the OS capture) while the play test is live.
 
-1. **1-start.png** (the cover = your thumbnail): spawn view — island, belt with
-   brainrots walking, volcano behind. Wide shot, brainrot labels readable.
-2. **2-play.png**: mid-game — a bought brainrot on your base, money ticking in the
-   HUD, belt list on the right.
-3. **3-tsunami.png**: during a tsunami warning/wave — red banner, wave wall on the belt.
-4. **4-win.png**: late game — several brainrots on the base, a rare/mythic one visible,
-   rebirth or upgrades panel open if you can.
+1. **1-start.png** (the cover = your thumbnail): spawn view — neon night-market
+   street, belt with brainrots walking, arch and neon signs behind. Wide shot,
+   brainrot labels readable.
+2. **2-play.png**: mid-game — a bought brainrot on a pedestal on your base, money
+   ticking in the HUD, "+$" popup visible, belt list on the right.
+3. **3-wave.png**: during a Brainrot Wave warning/wave — red banner, hot-pink goo
+   wall sweeping the street.
+4. **4-win.png**: late game — several brainrots of different rarities on the base,
+   a rare/mythic one visible with its glow, rebirth or upgrades panel open if you can.
 
 Replace the three starter files in `screenshots/` with these four. Names must sort
 in this order (the first by name is the cover and the judge sees it largest).
@@ -74,7 +82,7 @@ in this order (the first by name is the cover and the judge sees it largest).
 
 1. On the Creator Dashboard, open the experience → Configurations → Places →
    pick the start place (marked with a star) → **Icon**: upload a square picture
-   (512x512 is best) of the game.
+   (512x512 is best) of the game — one character close-up on a bright background.
 2. **Thumbnails** (Experience Detail Page tab): upload **1-start.png** FIRST — it
    must be the same picture as one of the screenshots in the repo. Add the other
    screenshots after it if you like.

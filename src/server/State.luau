@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: the single state store.
+-- BRAINROT BAZAAR: the single state store.
 -- Every number the game cares about lives in this one module, on the
 -- server only. No other server script keeps its own copy of a player's
 -- money, brainrots or lock: they all ask State, so the HUD, the economy
@@ -18,7 +18,7 @@ State.players = {}
 State.belt = {}
 State.nextUid = 1
 
--- Tsunami phase shared with the wave loop: "calm", "warning" or "wave".
+-- Wave phase shared with the wave loop: "calm", "warning" or "wave".
 State.wavePhase = "calm"
 State.waveCountdown = Config.Wave.calmSeconds
 

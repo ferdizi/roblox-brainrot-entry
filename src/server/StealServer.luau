@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: stealing, slapping and locking a base.
+-- BRAINROT BAZAAR: stealing, slapping and locking a base.
 -- The threat that makes a base worth defending. A thief clicks a
 -- brainrot on someone else's base, carries it home on foot, and anyone
 -- nearby can slap it out of their hands. A locked base cannot be

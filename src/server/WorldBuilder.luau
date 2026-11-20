@@ -4,7 +4,7 @@
 -- stays small and the world lives in readable code. The belt runs down
 -- the middle of a neon night street (west to east), six market-stall
 -- bases line both sides of the street, the spawn and shop sit south,
--- and a raised neon plaza stands north for tsunami escapes.
+-- and a raised neon plaza stands north for wave escapes.
 
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
 
@@ -393,7 +393,7 @@ end
 
 -- The safe plaza: the old safe hill spot, restyled as a raised neon
 -- platform. Its top stays at y=15 with centre (0, 15, -96), which is
--- what WaveServer checks for tsunami safety. Neon trim + glow posts.
+-- what WaveServer checks for wave safety. Neon trim + glow posts.
 local function decoratePlaza(folder)
 	decor("PlazaTrimBase", Vector3.new(36.5, 0.4, 36.5), Vector3.new(0, 8.2, -96), Color3.fromRGB(60, 220, 255), Enum.Material.Neon, folder)
 	decor("PlazaTrimTop", Vector3.new(22.5, 0.4, 22.5), Vector3.new(0, 14.2, -96), Color3.fromRGB(255, 60, 180), Enum.Material.Neon, folder)
@@ -488,7 +488,7 @@ end
 
 function WorldBuilder.build()
 	local folder = Instance.new("Folder")
-	folder.Name = "KrakatoaIsland"
+	folder.Name = "BazaarBazaar"
 	folder.Parent = workspace
 
 	-- Ground slab: dark night-market ground filling the whole view, so
@@ -517,10 +517,10 @@ function WorldBuilder.build()
 
 	-- The safe plaza: stepped neon platform, top at y=15, centre
 	-- (0, 15, -96) — the spot WaveServer treats as safe.
-	part("HillBase", Vector3.new(36, 8, 36), Vector3.new(0, 4, -96), Color3.fromRGB(30, 30, 48), Enum.Material.Slate, folder)
-	part("HillTop", Vector3.new(22, 6, 22), Vector3.new(0, 11, -96), Color3.fromRGB(38, 38, 58), Enum.Material.Slate, folder)
-	local hillTop = part("HillPad", Vector3.new(20, 1, 20), Vector3.new(0, 14.5, -96), Color3.fromRGB(48, 48, 70), Enum.Material.Slate, folder)
-	label(hillTop, "SAFE PLAZA", Color3.fromRGB(255, 255, 255), 24)
+	part("PlazaBase", Vector3.new(36, 8, 36), Vector3.new(0, 4, -96), Color3.fromRGB(30, 30, 48), Enum.Material.Slate, folder)
+	part("PlazaTop", Vector3.new(22, 6, 22), Vector3.new(0, 11, -96), Color3.fromRGB(38, 38, 58), Enum.Material.Slate, folder)
+	local plazaTop = part("PlazaPad", Vector3.new(20, 1, 20), Vector3.new(0, 14.5, -96), Color3.fromRGB(48, 48, 70), Enum.Material.Slate, folder)
+	label(plazaTop, "SAFE PLAZA", Color3.fromRGB(255, 255, 255), 24)
 
 	-- The belt: the runway brainrots walk, west end to east end.
 	-- Its centre and end pads come from Config.Belt, so the part, the
@@ -538,7 +538,7 @@ function WorldBuilder.build()
 
 	-- Spawn point near the shop, facing the belt.
 	local spawn = Instance.new("SpawnLocation")
-	spawn.Name = "IslandSpawn"
+	spawn.Name = "BazaarSpawn"
 	spawn.Size = Vector3.new(10, 1, 10)
 	spawn.Position = Vector3.new(0, 1, 48)
 	spawn.Color = Color3.fromRGB(120, 200, 120)

@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: client bootstrap.
+-- BRAINROT BAZAAR: client bootstrap.
 -- One LocalScript starts the client: it waits for the server's
 -- RemoteEvents, builds the HUD, binds the keys, and then does nothing
 -- but paint the snapshots the server sends once a second. The client
@@ -17,7 +17,7 @@ local Ui = require(script.Parent:WaitForChild("Ui"))
 local Input = require(script.Parent:WaitForChild("Input"))
 
 -- The server creates these in init.server.luau before any client runs.
-local remotes = ReplicatedStorage:WaitForChild("KrakatoaRemotes")
+local remotes = ReplicatedStorage:WaitForChild("BazaarRemotes")
 local stateSync = remotes:WaitForChild("StateSync")
 local buyBrainrot = remotes:WaitForChild("BuyBrainrot")
 local lockBase = remotes:WaitForChild("LockBase")
@@ -67,4 +67,4 @@ stateSync.OnClientEvent:Connect(function(snapshot)
 	Ui.update(snapshot)
 end)
 
-print("BRAINROT KRAKATOA client ready. Buy brainrots, lock your base, outrun the tsunami.")
+print("BRAINROT BAZAAR client ready. Buy brainrots, lock your base, outrun the wave.")

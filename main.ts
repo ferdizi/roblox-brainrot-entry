@@ -1,7 +1,7 @@
-// BRAINROT KRAKATOA — a make.fun roblox-brainrot-01 entry (Node 22, standard library only).
-// A 3D Steal-a-Brainrot-style game: brainrots walk a belt across a volcanic island lagoon,
+// BRAINROT BAZAAR — a make.fun roblox-brainrot-01 entry (Node 22, standard library only).
+// A 3D Steal-a-Brainrot-style game: brainrots walk a belt across a volcanic bazaar lagoon,
 // players buy them onto their base, earn $/second, steal from each other under a lock,
-// and outrun a tsunami every ~90 seconds. Rebirths, mutations, upgrades, a BrainrotDex
+// and outrun a wave every ~90 seconds. Rebirths, mutations, upgrades, a BrainrotDex
 // and a Contract Board round out the loop. The game is this directory's Rojo project,
 // built into game.rbxl with `rojo build default.project.json --output game.rbxl`.
 //

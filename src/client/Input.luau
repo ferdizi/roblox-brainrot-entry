@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: keyboard shortcuts.
+-- BRAINROT BAZAAR: keyboard shortcuts.
 -- Bound with ContextActionService, not UserInputService.InputBegan:
 -- Roblox's default camera scripts eat the arrow keys through
 -- gameProcessedEvent, and a handler that returns on it never sees
@@ -25,32 +25,32 @@ end
 
 -- The game's keys: lock, slap, rebirth, upgrades, dex, contracts.
 function Input.bindGameKeys(callbacks)
-	Input.bindKey("KrakatoaLock", Enum.KeyCode.L, function()
+	Input.bindKey("BazaarLock", Enum.KeyCode.L, function()
 		if callbacks.lock then
 			callbacks.lock()
 		end
 	end)
-	Input.bindKey("KrakatoaSlap", Enum.KeyCode.F, function()
+	Input.bindKey("BazaarSlap", Enum.KeyCode.F, function()
 		if callbacks.slap then
 			callbacks.slap()
 		end
 	end)
-	Input.bindKey("KrakatoaRebirth", Enum.KeyCode.R, function()
+	Input.bindKey("BazaarRebirth", Enum.KeyCode.R, function()
 		if callbacks.rebirth then
 			callbacks.rebirth()
 		end
 	end)
-	Input.bindKey("KrakatoaUpgrades", Enum.KeyCode.U, function()
+	Input.bindKey("BazaarUpgrades", Enum.KeyCode.U, function()
 		if callbacks.toggleUpgrades then
 			callbacks.toggleUpgrades()
 		end
 	end)
-	Input.bindKey("KrakatoaDex", Enum.KeyCode.B, function()
+	Input.bindKey("BazaarDex", Enum.KeyCode.B, function()
 		if callbacks.toggleDex then
 			callbacks.toggleDex()
 		end
 	end)
-	Input.bindKey("KrakatoaContracts", Enum.KeyCode.C, function()
+	Input.bindKey("BazaarContracts", Enum.KeyCode.C, function()
 		if callbacks.toggleContracts then
 			callbacks.toggleContracts()
 		end

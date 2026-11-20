@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: the belt, the buying and the money.
+-- BRAINROT BAZAAR: the belt, the buying and the money.
 -- Owns every brainrot that is walking the belt, every brainrot sitting
 -- on a base, and the one-second income tick that pays for them. Buying
 -- is server-authoritative: the client only asks, the server checks the
@@ -452,7 +452,7 @@ function BrainrotServer.walkModelTo(model, target)
 	end
 end
 
--- Spawn one brainrot at the volcano end of the belt and let it walk.
+-- Spawn one brainrot at the west end of the belt and let it walk.
 -- Its uid comes from State.newBeltBrainrot alone; stamping a second
 -- number here once gave two spawns the same uid.
 function BrainrotServer.spawnBrainrotOnBelt()

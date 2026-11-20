@@ -1,7 +1,7 @@
--- BRAINROT KRAKATOA: server bootstrap.
--- One script starts the game: it builds the island, creates the
+-- BRAINROT BAZAAR: server bootstrap.
+-- One script starts the game: it builds the bazaar, creates the
 -- RemoteEvents the client may use, hands each joining player a base
--- and a fresh state, and starts the belt, the stealing and the tsunami.
+-- and a fresh state, and starts the belt, the stealing and the wave.
 -- Nothing else runs on the server without going through here first.
 
 local Players = game:GetService("Players")
@@ -15,15 +15,15 @@ local BrainrotServer = require(script:WaitForChild("BrainrotServer"))
 local StealServer = require(script:WaitForChild("StealServer"))
 local WaveServer = require(script:WaitForChild("WaveServer"))
 
-print("BRAINROT KRAKATOA starting: building the island...")
+print("BRAINROT BAZAAR starting: building the bazaar...")
 
--- The island, the belt, the volcano, the hill and eight bases.
+-- The bazaar, the belt, the arch, the safe plaza and six stall-bases.
 WorldBuilder.build()
 
 -- The RemoteEvents. The client may only fire the ones listed here;
 -- every one is validated again on the server before it does anything.
 local remotesFolder = Instance.new("Folder")
-remotesFolder.Name = "KrakatoaRemotes"
+remotesFolder.Name = "BazaarRemotes"
 remotesFolder.Parent = ReplicatedStorage
 
 local remoteNames = {
@@ -44,7 +44,7 @@ for _, name in ipairs(remoteNames) do
 	remotes[name] = remote
 end
 
--- Server sounds: the mythic-spawn sting and the tsunami siren, both
+-- Server sounds: the mythic-spawn sting and the wave siren, both
 -- played from the server modules via a pcall-guarded Play.
 local function makeSound(name)
 	local sound = Instance.new("Sound")
@@ -64,7 +64,7 @@ BrainrotServer.onBaseClick = function(player, model)
 	StealServer.stealByModel(player, model)
 end
 
--- A tsunami that catches a thief mid-carry makes them drop the prize.
+-- A wave that catches a thief mid-carry makes them drop the prize.
 WaveServer.onWaveDrop = function(player)
 	StealServer.dropCarried(player)
 end
@@ -101,7 +101,7 @@ local function onPlayerAdded(player)
 	if snapshot then
 		remotes.StateSync:FireClient(player, snapshot)
 	end
-	print(player.Name .. " joined BRAINROT KRAKATOA on base " .. tostring(baseIndex))
+	print(player.Name .. " joined BRAINROT BAZAAR on base " .. tostring(baseIndex))
 end
 
 local function onPlayerRemoving(player)
@@ -124,4 +124,4 @@ BrainrotServer.start(remotes)
 StealServer.start(remotes)
 WaveServer.start(remotes)
 
-print("BRAINROT KRAKATOA live: belt, bases, stealing and tsunami running.")
+print("BRAINROT BAZAAR live: belt, bases, stealing and wave running.")
