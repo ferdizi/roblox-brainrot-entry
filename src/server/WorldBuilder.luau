@@ -108,6 +108,19 @@ local function decorR(name, size, position, colour, material, parent, yaw)
 	return p
 end
 
+-- A real light: a PointLight parented to a part, so it actually
+-- illuminates the ground and the characters near it. Every light is
+-- parented to a part that exists for the whole server lifetime, and
+-- there are only a few dozen in total, so performance stays fine.
+local function light(parent, colour, range, brightness)
+	local l = Instance.new("PointLight")
+	l.Color = colour
+	l.Range = range
+	l.Brightness = brightness
+	l.Parent = parent
+	return l
+end
+
 -- Uniform ball only: a Ball part with a non-cubic size ERRORS at
 -- runtime and can kill the spawner (broke the game once in c056694).
 -- Every ball in this file goes through here with one diameter.
@@ -208,6 +221,11 @@ function WorldBuilder.buildBase(index, centre)
 	decorR("Counter", Vector3.new(10, 1.6, 1.6), centre + rotate(Vector3.new(0, 0, 5.8)) + Vector3.new(0, 1.8, 0), Color3.fromRGB(120, 85, 50), Enum.Material.Wood, folder, yaw)
 	decorR("CounterTop", Vector3.new(10.4, 0.3, 2), centre + rotate(Vector3.new(0, 0, 5.8)) + Vector3.new(0, 2.7, 0), accent, Enum.Material.Neon, folder, yaw)
 
+	-- Warm stall light under the awning, so the stall, its pedestals
+	-- and any brainrots on them read clearly at night.
+	local stallLamp = decor("StallLamp", Vector3.new(1, 0.4, 1), centre + Vector3.new(0, 5.5, 0), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder)
+	light(stallLamp, Color3.fromRGB(255, 200, 130), 15, 1.5)
+
 	-- Gate posts at the front corners, flag on the back wall.
 	decor("GatePostL", Vector3.new(1, 5, 1), centre - outward * 6.5 + sideDir * 8.5 + Vector3.new(0, 3.5, 0), accent, Enum.Material.SmoothPlastic, folder)
 	decor("GatePostR", Vector3.new(1, 5, 1), centre - outward * 6.5 - sideDir * 8.5 + Vector3.new(0, 3.5, 0), accent, Enum.Material.SmoothPlastic, folder)
@@ -260,6 +278,18 @@ local function decorateBelt(folder)
 	decor("BeltSkirtS", Vector3.new(Config.Belt.length, 1, 0.8), Vector3.new(midX, 0.7, halfW + 0.4), Color3.fromRGB(25, 25, 35), Enum.Material.Metal, folder)
 	decor("BeltRailN", Vector3.new(Config.Belt.length, 0.3, 0.4), Vector3.new(midX, 1.35, -halfW - 0.4), Color3.fromRGB(255, 60, 180), Enum.Material.Neon, folder)
 	decor("BeltRailS", Vector3.new(Config.Belt.length, 0.3, 0.4), Vector3.new(midX, 1.35, halfW + 0.4), Color3.fromRGB(60, 220, 255), Enum.Material.Neon, folder)
+	-- Belt lamps: short posts on the north rail with a glowing bulb and
+	-- a real PointLight, so the belt and the brainrots walking it are
+	-- lit. Clear of the walking path (z=-4.4, characters walk at z=0).
+	for i, lx in ipairs({ -60, -20, 20, 60 }) do
+		decor("BeltLampPost", Vector3.new(0.4, 2.5, 0.4), Vector3.new(lx, 2.6, -halfW - 0.4), Color3.fromRGB(60, 60, 75), Enum.Material.Metal, folder)
+		local bulbColour = Color3.fromRGB(255, 60, 180)
+		if i % 2 == 0 then
+			bulbColour = Color3.fromRGB(60, 220, 255)
+		end
+		local beltBulb = ball("BeltLampBulb", 1, Vector3.new(lx, 4, -halfW - 0.4), bulbColour, Enum.Material.Neon, folder, 0)
+		light(beltBulb, bulbColour, 15, 1.2)
+	end
 	for x = beltStart + 8, beltEnd - 8, 20 do
 		decor("BeltRoller", Vector3.new(1, 0.12, Config.Belt.width - 1), Vector3.new(x, 1.26, 0), Color3.fromRGB(180, 180, 190), Enum.Material.Metal, folder)
 	end
@@ -323,6 +353,9 @@ local function decorateStalls(folder)
 				end
 				decor("StallAwning", Vector3.new(8, 0.3, 2.2), Vector3.new(x, 5.9, z - 2.2 + i * 2.2), colour, Enum.Material.SmoothPlastic, folder)
 			end
+			-- Warm lamp under the awning, so the stall and its counter read at night.
+			local stallLamp = decor("StallLamp", Vector3.new(1, 0.4, 1), Vector3.new(x, 5, z), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder)
+			light(stallLamp, Color3.fromRGB(255, 200, 130), 12, 1.2)
 			local sign = decor("StallSign", Vector3.new(5, 2, 0.4), Vector3.new(x, 7.2, z), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
 			label(sign, stallNames[((n - 1) % #stallNames) + 1], accent, 20)
 			-- Steam puff above the counter (uniform ball, transparent).
@@ -346,6 +379,12 @@ local function decorateStringLights(folder)
 	for li, x in ipairs({ -50, -25, 25, 50 }) do
 		decor("LightPoleN", Vector3.new(0.4, 10, 0.4), Vector3.new(x, 5, -12.5), Color3.fromRGB(60, 60, 75), Enum.Material.Metal, folder)
 		decor("LightPoleS", Vector3.new(0.4, 10, 0.4), Vector3.new(x, 5, 12.5), Color3.fromRGB(60, 60, 75), Enum.Material.Metal, folder)
+		-- Warm lamp bulb on top of each pole, with a real PointLight
+		-- so the street and sidewalks are actually lit, not just neon.
+		local bulbN = ball("LampBulb", 1.2, Vector3.new(x, 10.4, -12.5), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder, 0)
+		light(bulbN, Color3.fromRGB(255, 200, 130), 25, 1.5)
+		local bulbS = ball("LampBulb", 1.2, Vector3.new(x, 10.4, 12.5), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder, 0)
+		light(bulbS, Color3.fromRGB(255, 200, 130), 25, 1.5)
 		for i = 0, 8 do
 			local t = i / 8 -- 0 at north edge, 1 at south edge
 			local z = -12 + t * 24

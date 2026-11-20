@@ -40,13 +40,14 @@ end
 -- $/second. The mutation colours the body, head and limbs, so a Gold
 -- or Diamond brainrot reads at a glance. Feet sit at local y=-1.5:
 -- the body centre is (bodyH-3)/2 above the model pivot, and
--- PivotOffset shifts the pivot down to the feet, so every PivotTo
--- target (belt y=2.7, pad y=2.9) lands the feet on the floor instead
--- of sinking the body into it.
+-- The model pivots on an invisible Root part at local (0,0,0), so
+-- every PivotTo target (belt y=2.7, pad y=2.9) lands the feet on the
+-- floor instead of sinking the body into it. (The model's pivot
+-- offset property is NOT scriptable, so it is never read or written.)
 -- HARD RULES (a non-cubic Ball once errored and killed the spawner):
 -- every Ball part has a UNIFORM Size (X=Y=Z); every Cylinder has
 -- Y==Z. Anything that needs to be non-uniform is a Block.
-function BrainrotServer.buildModel(entry)
+local function buildModelInner(entry)
 	local model = Instance.new("Model")
 	model.Name = entry.name
 
@@ -326,11 +327,23 @@ function BrainrotServer.buildModel(entry)
 		part("GlitchCube", Vector3.new(0.7, 0.7, 0.7), Vector3.new(0, 3.6, -3.4), Color3.fromRGB(255, 240, 90), Enum.PartType.Block, Enum.Material.Neon)
 	end
 
-	model.PrimaryPart = body
-	-- Shift the pivot down to the feet (local y=0), so every PivotTo
-	-- target lands the feet on the floor: belt y=2.7 -> feet at 1.2,
-	-- pad y=2.9 -> feet at 1.4. Set after PrimaryPart, so it sticks.
-	model.PivotOffset = CFrame.new(0, -bodyCentreY, 0)
+	-- Invisible Root part at the model origin (local y=0) as the
+	-- PrimaryPart: the model pivots on it, so every PivotTo target
+	-- lands the feet (local y=-1.5) on the floor: belt y=2.7 -> feet
+	-- at 1.2, pad y=2.9 -> feet at 1.4. This replaces the model's
+	-- pivot-offset property, which is NOT scriptable and errored on
+	-- every character. The Root is invisible, non-colliding and
+	-- anchored, so it never shows or blocks anything.
+	local root = Instance.new("Part")
+	root.Name = "Root"
+	root.Size = Vector3.new(0.5, 0.5, 0.5)
+	root.Position = Vector3.new(0, 0, 0)
+	root.Color = Color3.fromRGB(255, 255, 255)
+	root.Transparency = 1
+	root.Anchored = true
+	root.CanCollide = false
+	root.Parent = model
+	model.PrimaryPart = root
 
 	-- Rarity aura: a ParticleEmitter on the body, brighter and busier
 	-- for higher rarities. Secret gets the biggest show.
@@ -417,6 +430,18 @@ function BrainrotServer.buildModel(entry)
 	return model
 end
 
+-- Public entry: build a model, never throwing. A failure prints the
+-- real error (with the cast id) and returns nil, so one bad model can
+-- never kill the spawner and the cause is always visible in Output.
+function BrainrotServer.buildModel(entry)
+	local ok, model = pcall(buildModelInner, entry)
+	if not ok then
+		warn("[Brainrot] buildModel failed for " .. tostring(entry.castId) .. ": " .. tostring(model))
+		return nil
+	end
+	return model
+end
+
 -- Walk a model from where it is to a target position, in small steps,
 -- so a bought brainrot visibly waddles home instead of teleporting.
 -- The walking set marks it mid-walk (the idle loop skips it); the
@@ -476,9 +501,9 @@ function BrainrotServer.spawnBrainrotOnBelt()
 	end
 
 	-- A bad model must never kill the spawner loop: skip that one spawn.
-	local ok, model = pcall(BrainrotServer.buildModel, entry)
-	if not ok then
-		warn("[Brainrot] buildModel failed for " .. tostring(entry.castId) .. ": " .. tostring(model))
+	-- buildModel prints the real error and returns nil on failure.
+	local model = BrainrotServer.buildModel(entry)
+	if not model then
 		BrainrotServer.removeBeltBrainrot(entry.uid)
 		return
 	end
