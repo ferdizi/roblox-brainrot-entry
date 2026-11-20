@@ -6,141 +6,131 @@
 
 local Config = {}
 
--- The cast. An original Indonesian food-meme line-up, cheapest first.
--- cost is what a brainrot sells for on the belt; rate is its $/second
--- once it sits on a base slot. colour is the body colour of its 3D model.
+-- The cast. "Brainrot Bazaar": eleven original meme characters,
+-- cheapest first. cost is what a brainrot sells for on the belt;
+-- rate is its $/second once it sits on a base slot. colour is the
+-- body colour of its 3D model.
 Config.Cast = {
 	{
-		id = "kopi-kura",
-		name = "Kopi Kura-Kura",
+		id = "soggy-toastino",
+		name = "Soggy Toastino",
 		rarity = "Common",
-		rate = 5,
-		cost = 50,
+		rate = 2,
+		cost = 20,
 		weight = 45,
-		colour = Color3.fromRGB(139, 94, 52),
-		hat = "Cup",
-		blurb = "A sleepy turtle that brews coffee in its shell.",
+		colour = Color3.fromRGB(196, 154, 108),
+		hat = "Toaster",
+		blurb = "A toaster with legs and a very sad slice of toast.",
 	},
 	{
-		id = "kerupuk-krak",
-		name = "Kerupuk Krak",
+		id = "bonk-pigeon",
+		name = "Bonk Pigeon",
 		rarity = "Common",
-		rate = 8,
-		cost = 80,
+		rate = 4,
+		cost = 40,
 		weight = 40,
-		colour = Color3.fromRGB(240, 220, 160),
-		hat = "Bowl",
-		blurb = "Crunchy, loud, and impossible to ignore.",
+		colour = Color3.fromRGB(140, 160, 190),
+		hat = "Helmet",
+		blurb = "A fat pigeon in a tiny helmet. It bonks. You pay.",
 	},
 	{
-		id = "nasi-ninja",
-		name = "Nasi Goreng Ninja",
+		id = "captain-noodlebeard",
+		name = "Captain Noodlebeard",
 		rarity = "Rare",
-		rate = 15,
-		cost = 150,
-		weight = 28,
-		colour = Color3.fromRGB(214, 158, 64),
-		hat = "Bandana",
-		blurb = "Fried rice that strikes from the wok, silently.",
+		rate = 12,
+		cost = 120,
+		weight = 24,
+		colour = Color3.fromRGB(245, 230, 200),
+		hat = "PirateHat",
+		blurb = "A bowl-headed pirate with ramen noodle whiskers.",
 	},
 	{
-		id = "mie-mafia",
-		name = "Mie Goreng Mafia",
+		id = "lil-wobblecone",
+		name = "Lil Wobblecone",
 		rarity = "Rare",
-		rate = 25,
-		cost = 250,
-		weight = 22,
-		colour = Color3.fromRGB(200, 120, 40),
-		hat = "Bandana",
-		blurb = "It runs the noodle racket on this island.",
+		rate = 18,
+		cost = 180,
+		weight = 20,
+		colour = Color3.fromRGB(255, 140, 40),
+		hat = "Cone",
+		blurb = "A traffic cone wobbling forever on a skateboard.",
 	},
 	{
-		id = "bakso-blast",
-		name = "Bakso Blast",
+		id = "sir-crustacio",
+		name = "Sir Crustacio",
 		rarity = "Epic",
-		rate = 40,
-		cost = 400,
-		weight = 15,
-		colour = Color3.fromRGB(196, 110, 90),
-		hat = "Bowl",
-		blurb = "A meatball with a fuse. It hums before it booms.",
+		rate = 60,
+		cost = 600,
+		weight = 14,
+		colour = Color3.fromRGB(220, 60, 50),
+		hat = "Helmet",
+		blurb = "A crab knight. Its sword is a baguette. Fear it.",
 	},
 	{
-		id = "rendang-raksasa",
-		name = "Rendang Raksasa",
+		id = "madame-flamingatto",
+		name = "Madame Flamingatto",
 		rarity = "Epic",
-		rate = 70,
-		cost = 700,
-		weight = 12,
-		colour = Color3.fromRGB(150, 60, 40),
-		hat = "Bowl",
-		blurb = "Slow-cooked for a hundred years. Worth the wait.",
+		rate = 85,
+		cost = 850,
+		weight = 11,
+		colour = Color3.fromRGB(255, 150, 200),
+		hat = "Sunglasses",
+		blurb = "A flamingo in sunglasses, carrying a handbag.",
 	},
 	{
-		id = "durian-doom",
-		name = "Durian Doom",
+		id = "turbo-tungtung",
+		name = "Turbo Tungtung Toaster-Jr",
 		rarity = "Legendary",
-		rate = 120,
-		cost = 1200,
-		weight = 8,
-		colour = Color3.fromRGB(120, 180, 60),
-		hat = "Spikes",
-		blurb = "Smells like trouble. Pays like a king.",
+		rate = 300,
+		cost = 3000,
+		weight = 7,
+		colour = Color3.fromRGB(150, 105, 60),
+		hat = "RocketPack",
+		blurb = "A speedy wooden log robot with a rocket pack.",
 	},
 	{
-		id = "sambal-setan",
-		name = "Sambal Setan",
+		id = "duchess-cactoona",
+		name = "Duchess Cactoona",
 		rarity = "Legendary",
-		rate = 200,
-		cost = 2000,
-		weight = 6,
-		colour = Color3.fromRGB(230, 40, 40),
-		hat = "Spikes",
-		blurb = "One bite and your tongue files a complaint.",
+		rate = 420,
+		cost = 4200,
+		weight = 5,
+		colour = Color3.fromRGB(60, 180, 90),
+		hat = "Crown",
+		blurb = "A cactus opera singer. The notes float. So does she.",
 	},
 	{
-		id = "es-teh",
-		name = "Es Teh Tsunami",
+		id = "glorpo-ghost-burger",
+		name = "Glorpo the Ghost Burger",
 		rarity = "Mythic",
-		rate = 350,
-		cost = 3500,
+		rate = 1500,
+		cost = 15000,
 		weight = 3,
-		colour = Color3.fromRGB(90, 170, 220),
-		hat = "Straw",
-		blurb = "Iced tea in a wave. Cold, sweet, unstoppable.",
+		colour = Color3.fromRGB(230, 240, 255),
+		hat = "Ghost",
+		blurb = "A translucent burger with a glowing smile.",
 	},
 	{
-		id = "gado-golem",
-		name = "Gado-Gado Golem",
+		id = "baron-vroomvroom",
+		name = "Baron Vroomvroom",
 		rarity = "Mythic",
-		rate = 600,
-		cost = 6000,
+		rate = 2200,
+		cost = 22000,
 		weight = 2,
-		colour = Color3.fromRGB(80, 160, 70),
-		hat = "Straw",
-		blurb = "A gentle giant made of vegetables and vibes.",
+		colour = Color3.fromRGB(220, 30, 30),
+		hat = "Moustache",
+		blurb = "A moustached sports car with human legs.",
 	},
 	{
-		id = "krakatoa-king",
-		name = "Krakatoa King",
+		id = "blobfather",
+		name = "The Great Brainrot Blobfather",
 		rarity = "Secret",
-		rate = 1000,
-		cost = 10000,
+		rate = 12000,
+		cost = 120000,
 		weight = 1,
-		colour = Color3.fromRGB(220, 70, 40),
+		colour = Color3.fromRGB(150, 60, 220),
 		hat = "Crown",
-		blurb = "The volcano itself, wearing a crown. One in a hundred.",
-	},
-	{
-		id = "lava-lontong",
-		name = "Lava Lontong",
-		rarity = "Secret",
-		rate = 2000,
-		cost = 20000,
-		weight = 1,
-		colour = Color3.fromRGB(255, 100, 30),
-		hat = "Crown",
-		blurb = "Rice cake, forged in the crater. Do not eat.",
+		blurb = "A giant gelatinous blob with a crown and glitch cubes.",
 	},
 }
 
@@ -155,14 +145,14 @@ Config.RarityColour = {
 }
 
 -- Mutations. A brainrot is born with one; the multiplier applies to rate.
--- Storm only rolls while a tsunami warning is live, which makes warnings
+-- Glitch only rolls while a tsunami warning is live, which makes warnings
 -- worth watching instead of worth hiding from.
 Config.Mutations = {
 	{ id = "Normal", mult = 1, weight = 80, colour = Color3.fromRGB(230, 230, 230) },
-	{ id = "Gold", mult = 2, weight = 12, colour = Color3.fromRGB(255, 210, 60) },
-	{ id = "Diamond", mult = 5, weight = 5, colour = Color3.fromRGB(120, 220, 255) },
-	{ id = "Rainbow", mult = 10, weight = 2, colour = Color3.fromRGB(255, 120, 220) },
-	{ id = "Storm", mult = 8, weight = 1, colour = Color3.fromRGB(90, 120, 255), stormOnly = true },
+	{ id = "Gold", mult = 1.5, weight = 12, colour = Color3.fromRGB(255, 210, 60) },
+	{ id = "Diamond", mult = 2, weight = 5, colour = Color3.fromRGB(120, 220, 255) },
+	{ id = "Rainbow", mult = 3, weight = 2, colour = Color3.fromRGB(255, 120, 220) },
+	{ id = "Glitch", mult = 4, weight = 1, colour = Color3.fromRGB(160, 100, 255), stormOnly = true },
 }
 
 -- The belt: where brainrots walk before someone buys them.
@@ -178,9 +168,11 @@ Config.Belt = {
 	startMoney = 100, -- every player starts with this much cash
 }
 
--- Player bases: eight plots in a ring around the island.
+-- Player bases: six plots, 3 north + 3 south along the street.
+-- (WorldBuilder still lays them out in a ring; a world phase
+-- repositions them. Only the count lives here.)
 Config.Bases = {
-	count = 8,
+	count = 6,
 	radius = 82,
 	baseSlots = 4, -- slots before upgrades
 	maxSlots = 10,
@@ -217,6 +209,7 @@ Config.Upgrades = {
 	speed = { name = "Swift Feet", baseCost = 250, costMult = 1.7, maxLevel = 3, speedPerLevel = 2 },
 	slap = { name = "Heavy Slap", baseCost = 200, costMult = 1.7, maxLevel = 3, powerPerLevel = 8 },
 	lock = { name = "Longer Lock", baseCost = 350, costMult = 1.8, maxLevel = 3, secondsPerLevel = 10 },
+	beltSpeed = { name = "Faster Conveyor", baseCost = 400, costMult = 1.8, maxLevel = 3, speedPerLevel = 1.5 },
 }
 
 -- Contract Board: three goals that pay cash when finished.
@@ -243,7 +236,7 @@ function Config.rollCast()
 	return Config.Cast[1]
 end
 
--- Pick a mutation. Storm only appears while a warning is live.
+-- Pick a mutation. Glitch only appears while a warning is live.
 function Config.rollMutation(stormActive)
 	local total = 0
 	for _, entry in ipairs(Config.Mutations) do

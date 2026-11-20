@@ -15,36 +15,41 @@ local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
 local BrainrotServer = {}
 BrainrotServer.remotes = nil
 
--- Build the 3D model for one brainrot: a chunky body, a head, eyes,
--- a hat that says what it is, and a floating label with its name,
--- rarity and $/second, so a buyer can read it from across the belt.
 -- Build the 3D model for one brainrot: a distinct character per cast
--- member (round turtle, flat cracker, ninja rice, noodle mobster...),
--- with arms and legs, a head with eyes on its front face, a big hat,
--- and a floating label with name, rarity and $/second. The mutation
--- colours the whole body, so a Gold or Diamond brainrot reads at a
--- glance. Feet sit at local y=-1.5: the body centre is (bodyH-3)/2
--- above the model pivot, and PivotOffset shifts the pivot down to the
--- feet, so every PivotTo target (belt y=2.7, pad y=2.9) lands the feet
--- on the floor instead of sinking the body into it.
+-- member of "Brainrot Bazaar" (toaster, pigeon, noodle pirate, cone,
+-- crab knight, flamingo, log robot, cactus diva, ghost burger, race
+-- car, blob boss), with arms and legs, a head with eyes on its front
+-- face, a rarity aura, and a floating label with name, rarity and
+-- $/second. The mutation colours the body, head and limbs, so a Gold
+-- or Diamond brainrot reads at a glance. Feet sit at local y=-1.5:
+-- the body centre is (bodyH-3)/2 above the model pivot, and
+-- PivotOffset shifts the pivot down to the feet, so every PivotTo
+-- target (belt y=2.7, pad y=2.9) lands the feet on the floor instead
+-- of sinking the body into it.
+-- HARD RULES (a non-cubic Ball once errored and killed the spawner):
+-- every Ball part has a UNIFORM Size (X=Y=Z); every Cylinder has
+-- Y==Z. Anything that needs to be non-uniform is a Block.
 function BrainrotServer.buildModel(entry)
 	local model = Instance.new("Model")
 	model.Name = entry.name
 
-	-- Mutation colour: the mutation shows on the body, not just the label.
-	local bodyColour = entry.colour
-	if entry.mutation and entry.mutation ~= "Normal" then
+	-- Mutation colour: the mutation shows on the body, head and limbs.
+	local mutationId = entry.mutation or "Normal"
+	local mutationColour = nil
+	if mutationId ~= "Normal" then
 		for _, mut in ipairs(Config.Mutations) do
-			if mut.id == entry.mutation then
-				bodyColour = mut.colour
+			if mut.id == mutationId then
+				mutationColour = mut.colour
 				break
 			end
 		end
 	end
+	local bodyColour = mutationColour or entry.colour
 	local darkColour = Color3.new(bodyColour.R * 0.65, bodyColour.G * 0.65, bodyColour.B * 0.65)
+	local rarityColour = Config.RarityColour[entry.rarity] or Color3.fromRGB(255, 255, 255)
 
 	-- One helper builds every part: anchored, non-colliding, parented.
-	local function part(name, size, pos, colour, shape, material, rot)
+	local function part(name, size, pos, colour, shape, material, rot, transparency)
 		local p = Instance.new("Part")
 		p.Name = name
 		p.Size = size
@@ -56,6 +61,9 @@ function BrainrotServer.buildModel(entry)
 		p.Color = colour
 		p.Shape = shape or Enum.PartType.Block
 		p.Material = material or Enum.Material.SmoothPlastic
+		if transparency then
+			p.Transparency = transparency
+		end
 		p.Anchored = true
 		p.CanCollide = false
 		p.Parent = model
@@ -70,36 +78,70 @@ function BrainrotServer.buildModel(entry)
 	local bodyMaterial = Enum.Material.SmoothPlastic
 	local headShape = Enum.PartType.Block
 	local headW, headH, headD = 2.6, 2.2, 2.6
-	if id == "kopi-kura" then
+	local eyeScale = 1
+	local legSize = Vector3.new(1, 1.5, 1)
+	local armSize = Vector3.new(0.9, 2.2, 0.9)
+	local armShape = Enum.PartType.Block
+	local idleType = "bob"
+	local ghostly = false -- translucent body + head (Glorpo)
+	if id == "soggy-toastino" then
+		bodyW, bodyH, bodyD = 4.2, 4.5, 3.0
+		headW, headH, headD = 2.6, 2.6, 1.0
+	elseif id == "bonk-pigeon" then
 		bodyShape = Enum.PartType.Ball
 		headShape = Enum.PartType.Ball
 		headW, headH, headD = 2.4, 2.4, 2.4
-	elseif id == "kerupuk-krak" then
-		bodyShape = Enum.PartType.Ball
-		-- Ball needs a uniform size; 5.2 keeps the wide cracker read.
-		bodyW, bodyH, bodyD = 5.2, 5.2, 5.2
-	elseif id == "bakso-blast" then
-		bodyShape = Enum.PartType.Ball
-		headShape = Enum.PartType.Ball
-		headW, headH, headD = 2.4, 2.4, 2.4
-	elseif id == "durian-doom" then
-		bodyShape = Enum.PartType.Ball
-	elseif id == "es-teh" then
+		eyeScale = 1.8
+		legSize = Vector3.new(0.6, 1.0, 0.6)
+		armSize = Vector3.new(0.7, 1.8, 1.6)
+		idleType = "bounce"
+	elseif id == "captain-noodlebeard" then
+		bodyW, bodyH, bodyD = 4.5, 4.5, 3.6
+		headShape = Enum.PartType.Cylinder
+		headW, headH, headD = 3.0, 2.2, 3.0
+	elseif id == "lil-wobblecone" then
 		bodyShape = Enum.PartType.Cylinder
-		headShape = Enum.PartType.Ball
-		headW, headH, headD = 2.0, 2.0, 2.0
-	elseif id == "rendang-raksasa" then
-		bodyW, bodyH, bodyD = 5.2, 5.0, 4.4
-		headW, headH, headD = 3.0, 2.4, 3.0
-	elseif id == "gado-golem" then
-		bodyW, bodyH, bodyD = 5.2, 5.0, 4.6
-		headW, headH, headD = 3.0, 2.4, 3.0
-	elseif id == "lava-lontong" then
-		bodyShape = Enum.PartType.Cylinder
-		bodyW, bodyD = 4.2, 4.2
-		bodyMaterial = Enum.Material.Neon
+		headW, headH, headD = 2.2, 1.8, 2.2
+		legSize = Vector3.new(0.8, 1.0, 0.8)
+		idleType = "bounce"
+	elseif id == "sir-crustacio" then
+		bodyW, bodyH, bodyD = 4.5, 4.5, 4.0
+		armShape = Enum.PartType.Ball
+		armSize = Vector3.new(1.6, 1.6, 1.6)
+	elseif id == "madame-flamingatto" then
+		bodyShape = Enum.PartType.Ball
+		bodyW, bodyH, bodyD = 4.2, 4.2, 4.2
 		headShape = Enum.PartType.Ball
 		headW, headH, headD = 2.2, 2.2, 2.2
+		legSize = Vector3.new(0.7, 1.5, 0.7)
+		idleType = "spin"
+	elseif id == "turbo-tungtung" then
+		bodyW, bodyH, bodyD = 4.0, 4.5, 3.4
+		headW, headH, headD = 2.4, 2.2, 2.4
+		legSize = Vector3.new(1, 1.5, 1)
+		idleType = "bounce"
+	elseif id == "duchess-cactoona" then
+		bodyW, bodyH, bodyD = 4.2, 4.5, 3.6
+		headShape = Enum.PartType.Ball
+		headW, headH, headD = 2.4, 2.4, 2.4
+		idleType = "spin"
+	elseif id == "glorpo-ghost-burger" then
+		bodyShape = Enum.PartType.Ball
+		bodyW, bodyH, bodyD = 4.8, 4.8, 4.8
+		headShape = Enum.PartType.Ball
+		headW, headH, headD = 2.6, 2.6, 2.6
+		ghostly = true
+	elseif id == "baron-vroomvroom" then
+		bodyW, bodyH, bodyD = 5.0, 3.2, 3.0
+		headW, headH, headD = 2.6, 1.6, 2.2
+		idleType = "bounce"
+	elseif id == "blobfather" then
+		bodyShape = Enum.PartType.Ball
+		bodyW, bodyH, bodyD = 5.2, 5.2, 5.2
+		headShape = Enum.PartType.Ball
+		headW, headH, headD = 2.4, 2.4, 2.4
+		eyeScale = 1.2
+		idleType = "spin"
 	end
 
 	local bodyCentreY = (bodyH - 3) / 2
@@ -108,160 +150,163 @@ function BrainrotServer.buildModel(entry)
 	local bodyRot = nil
 	if bodyShape == Enum.PartType.Cylinder then
 		-- A cylinder's axis runs along X; stand it upright.
+		-- bodyW == bodyD keeps Y==Z after the rotation.
 		bodySize = Vector3.new(bodyH, bodyW, bodyD)
 		bodyRot = CFrame.Angles(0, 0, math.pi / 2)
 	end
-	local body = part("Body", bodySize, Vector3.new(0, bodyCentreY, 0), bodyColour, bodyShape, bodyMaterial, bodyRot)
+	local bodyTransparency = ghostly and 0.35 or nil
+	local body = part("Body", bodySize, Vector3.new(0, bodyCentreY, 0), bodyColour, bodyShape, bodyMaterial, bodyRot, bodyTransparency)
 
 	-- Legs end at local y=-1.5, the belt/pad top, for every cast member.
 	local legX = bodyW / 2 - 0.9
-	local legSize = Vector3.new(1, 1.5, 1)
 	local legY = -0.75
-	if id == "kopi-kura" then
-		legSize = Vector3.new(1.2, 1.2, 1.2)
-		legY = -0.9
-	elseif id == "rendang-raksasa" or id == "gado-golem" then
-		legSize = Vector3.new(1.4, 1.5, 1.4)
+	if id == "bonk-pigeon" or id == "lil-wobblecone" then
+		legY = -1.0
+	elseif id == "baron-vroomvroom" then
+		legX = bodyW / 2 - 1.2
 	end
 	for _, sx in ipairs({ -1, 1 }) do
 		part("Leg", legSize, Vector3.new(sx * legX, legY, 0), darkColour)
 	end
 
 	-- Arms stick out of the body's sides so it reads as a character.
+	-- (Sir Crustacio's arms are claw Balls: uniform 1.6 size.)
 	local armX = bodyW / 2 + 0.45
-	local armSize = Vector3.new(0.9, 2.2, 0.9)
 	local armY = 0.9
-	if id == "kopi-kura" then
-		armSize = Vector3.new(1.6, 0.5, 2.0)
-		armX = bodyW / 2 + 0.6
-		armY = 0.4
-	elseif id == "rendang-raksasa" or id == "gado-golem" then
-		armSize = Vector3.new(1.3, 2.6, 1.3)
-		armX = bodyW / 2 + 0.65
-		armY = 1.0
+	if id == "sir-crustacio" then
+		armX = bodyW / 2 + 0.7
+		armY = 0.6
+	elseif id == "madame-flamingatto" then
+		armX = bodyW / 2 + 0.3
+		armY = 0.6
 	end
 	for _, sx in ipairs({ -1, 1 }) do
-		part("Arm", armSize, Vector3.new(sx * armX, armY, 0), darkColour)
+		part("Arm", armSize, Vector3.new(sx * armX, armY, 0), darkColour, armShape)
 	end
 
 	-- Head, clearly separate on top of the body.
 	local headCentreY = bodyTopY + headH / 2
 	local headTopY = bodyTopY + headH
-	part("Head", Vector3.new(headW, headH, headD), Vector3.new(0, headCentreY, 0), bodyColour, headShape)
+	local headSize = Vector3.new(headW, headH, headD)
+	local headRot = nil
+	if headShape == Enum.PartType.Cylinder then
+		-- Bowl head: axis along X, stood upright; headW == headD.
+		headSize = Vector3.new(headH, headW, headD)
+		headRot = CFrame.Angles(0, 0, math.pi / 2)
+	end
+	part("Head", headSize, Vector3.new(0, headCentreY, 0), bodyColour, headShape, Enum.Material.SmoothPlastic, headRot, bodyTransparency)
 
 	-- Eyes on the front face of the head, with pupils.
 	local eyeZ = headD / 2 + 0.1
 	if headShape == Enum.PartType.Ball then
 		eyeZ = headD / 2 - 0.15
 	end
+	local eyeW, eyeH = 0.55 * eyeScale, 0.75 * eyeScale
 	for _, x in ipairs({ -0.62, 0.62 }) do
-		part("Eye", Vector3.new(0.55, 0.75, 0.35), Vector3.new(x, headCentreY + 0.3, eyeZ), Color3.fromRGB(255, 255, 255))
-		part("Pupil", Vector3.new(0.28, 0.4, 0.16), Vector3.new(x, headCentreY + 0.3, eyeZ + 0.19), Color3.fromRGB(20, 20, 20))
+		part("Eye", Vector3.new(eyeW, eyeH, 0.35), Vector3.new(x, headCentreY + 0.3, eyeZ), Color3.fromRGB(255, 255, 255))
+		part("Pupil", Vector3.new(0.28 * eyeScale, 0.4 * eyeScale, 0.16), Vector3.new(x, headCentreY + 0.3, eyeZ + 0.19), Color3.fromRGB(20, 20, 20))
 	end
 
 	-- A mouth on the ones that read better with one.
 	local mouthY = headCentreY - headH / 2 + 0.35
-	if id == "kerupuk-krak" or id == "gado-golem" or id == "es-teh" then
+	if id == "soggy-toastino" then
+		-- Sad frown: two short bars angled down toward the middle.
+		for _, sx in ipairs({ -1, 1 }) do
+			part("Frown", Vector3.new(0.55, 0.22, 0.2), Vector3.new(sx * 0.35, mouthY, headD / 2 + 0.1), Color3.fromRGB(60, 30, 20), Enum.PartType.Block, nil, CFrame.Angles(0, 0, sx * 0.5))
+		end
+	elseif id == "glorpo-ghost-burger" then
+		-- Glowing smile.
+		part("Smile", Vector3.new(1.2, 0.3, 0.2), Vector3.new(0, mouthY, headD / 2 + 0.1), Color3.fromRGB(255, 230, 90), Enum.PartType.Block, Enum.Material.Neon)
+	elseif id ~= "bonk-pigeon" and id ~= "captain-noodlebeard" and id ~= "baron-vroomvroom" then
 		part("Mouth", Vector3.new(1.1, 0.35, 0.2), Vector3.new(0, mouthY, headD / 2 + 0.1), Color3.fromRGB(60, 30, 20))
-	elseif id == "sambal-setan" then
-		part("Mouth", Vector3.new(1.3, 0.4, 0.2), Vector3.new(0, mouthY, headD / 2 + 0.1), Color3.fromRGB(40, 10, 10))
-		for _, x in ipairs({ -0.35, 0.35 }) do
-			part("Fang", Vector3.new(0.35, 0.6, 0.2), Vector3.new(x, mouthY - 0.35, headD / 2 + 0.1), Color3.fromRGB(255, 255, 255))
-		end
-	elseif id == "nasi-ninja" then
-		part("Mask", Vector3.new(2.2, 0.8, 0.2), Vector3.new(0, mouthY, headD / 2 + 0.1), Color3.fromRGB(40, 40, 40))
-	elseif id == "kopi-kura" then
-		part("Beak", Vector3.new(0.8, 0.45, 0.4), Vector3.new(0, mouthY, headD / 2 - 0.4), Color3.fromRGB(220, 170, 90))
 	end
 
-	-- The hat: one BIG part per cast member, so the silhouette reads.
-	if entry.hat == "Cup" then
-		-- White coffee cup on the head, coffee showing on top.
-		part("Hat", Vector3.new(1.7, 2.2, 2.2), Vector3.new(0, headTopY + 0.85, 0), Color3.fromRGB(255, 255, 255), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
-		part("Coffee", Vector3.new(0.25, 1.8, 1.8), Vector3.new(0, headTopY + 1.65, 0), Color3.fromRGB(90, 50, 20), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
-	elseif entry.hat == "Bandana" then
-		-- Red band around the upper head, knot tails sticking up behind.
-		part("Hat", Vector3.new(headW + 0.3, 0.8, headD + 0.3), Vector3.new(0, headTopY - 0.5, 0), Color3.fromRGB(200, 40, 40))
-		for _, x in ipairs({ -0.5, 0.5 }) do
-			part("BandanaTail", Vector3.new(0.5, 1.6, 0.2), Vector3.new(x, headTopY + 0.3, -headD / 2 - 0.15), Color3.fromRGB(200, 40, 40))
+	-- Character details: what makes each cast member its own character.
+	if id == "soggy-toastino" then
+		-- Toaster slots on top of the body, lever on the side.
+		for _, x in ipairs({ -0.9, 0.9 }) do
+			part("Slot", Vector3.new(1.4, 0.2, 2.0), Vector3.new(x, bodyTopY - 0.05, 0), Color3.fromRGB(40, 40, 40))
 		end
-	elseif entry.hat == "Bowl" then
-		-- Wide flat bowl, like a rice bowl balanced on the head.
-		local bowlD = 3.8
-		if id == "rendang-raksasa" then
-			bowlD = 4.4
+		part("Lever", Vector3.new(0.5, 0.5, 0.5), Vector3.new(bodyW / 2 + 0.25, 1.4, 0), Color3.fromRGB(220, 60, 60), Enum.PartType.Ball)
+	elseif id == "bonk-pigeon" then
+		-- Tiny helmet: a grey disc on the head, plus an orange beak.
+		part("Helmet", Vector3.new(0.5, 2.6, 2.6), Vector3.new(0, headTopY + 0.1, 0), Color3.fromRGB(120, 130, 140), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
+		part("Beak", Vector3.new(0.7, 0.4, 0.5), Vector3.new(0, headCentreY - 0.2, headD / 2 + 0.1), Color3.fromRGB(255, 170, 40))
+	elseif id == "captain-noodlebeard" then
+		-- Black pirate hat: wide brim + top, and ramen noodle whiskers
+		-- hanging from the bowl's rim down over the face.
+		part("PirateHat", Vector3.new(3.6, 0.4, 3.6), Vector3.new(0, headTopY + 0.2, 0), Color3.fromRGB(30, 30, 35))
+		part("PirateHatTop", Vector3.new(1.8, 1.0, 1.8), Vector3.new(0, headTopY + 0.9, 0), Color3.fromRGB(30, 30, 35))
+		for _, x in ipairs({ -0.9, 0, 0.9 }) do
+			part("Noodle", Vector3.new(1.6, 0.3, 0.3), Vector3.new(x, headCentreY - 1.0, headD / 2 + 0.15), Color3.fromRGB(240, 200, 80), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
 		end
-		part("Hat", Vector3.new(0.9, bowlD, bowlD), Vector3.new(0, headTopY + 0.45, 0), Color3.fromRGB(240, 240, 220), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
-	elseif entry.hat == "Spikes" then
-		-- Three spikes across the top of the head.
-		part("Hat", Vector3.new(0.8, 1.8, 0.8), Vector3.new(0, headTopY + 0.9, 0), bodyColour)
-		part("Spike", Vector3.new(0.8, 2.2, 0.8), Vector3.new(-1.1, headTopY + 1.0, 0), bodyColour)
-		part("Spike", Vector3.new(0.8, 2.2, 0.8), Vector3.new(1.1, headTopY + 1.0, 0), bodyColour)
-	elseif entry.hat == "Straw" then
-		-- Wide straw hat brim, with a pink straw poking out of the top.
-		part("Hat", Vector3.new(0.4, 4.4, 4.4), Vector3.new(0, headTopY + 0.2, 0), Color3.fromRGB(230, 200, 90), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
-		part("Straw", Vector3.new(2.4, 0.45, 0.45), Vector3.new(0.7, headTopY + 1.3, 0), Color3.fromRGB(255, 90, 120), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2 - 0.35))
-	else -- Crown
-		-- Big gold crown: wide base plus three points.
-		part("Hat", Vector3.new(3.4, 0.9, 3.4), Vector3.new(0, headTopY + 0.45, 0), Color3.fromRGB(255, 210, 60), Enum.PartType.Block, Enum.Material.Neon)
-		for _, x in ipairs({ -1.2, 0, 1.2 }) do
-			part("CrownPoint", Vector3.new(0.7, 1.1, 0.7), Vector3.new(x, headTopY + 1.4, 0), Color3.fromRGB(255, 210, 60), Enum.PartType.Block, Enum.Material.Neon)
+	elseif id == "lil-wobblecone" then
+		-- White stripe around the cone head, and a skateboard underfoot:
+		-- deck at y=-1.35 (bottom exactly at -1.5) with four Ball wheels.
+		part("Stripe", Vector3.new(headW + 0.15, 0.5, headD + 0.15), Vector3.new(0, headCentreY + 0.3, 0), Color3.fromRGB(255, 255, 255))
+		part("Skateboard", Vector3.new(3.4, 0.3, 1.4), Vector3.new(0, -1.35, 0), Color3.fromRGB(60, 60, 70))
+		for _, wx in ipairs({ -1.2, 1.2 }) do
+			for _, wz in ipairs({ -0.55, 0.55 }) do
+				part("Wheel", Vector3.new(0.6, 0.6, 0.6), Vector3.new(wx, -1.2, wz), Color3.fromRGB(30, 30, 30), Enum.PartType.Ball)
+			end
 		end
-	end
-
-	-- Extras that make each cast member its own character.
-	if id == "kopi-kura" then
-		-- Turtle shell on the back, darker than the body.
-		-- Flat plate shell on the back (Block: a Ball must be cubic).
-		part("Shell", Vector3.new(4.9, 3.4, 1.4), Vector3.new(0, bodyCentreY + 0.2, -1.9), Color3.fromRGB(90, 60, 30), Enum.PartType.Block)
-	elseif id == "kerupuk-krak" then
-		-- Cracker freckles across the front.
-		part("Crackle", Vector3.new(0.5, 0.5, 0.5), Vector3.new(-1.2, 1.6, 2.0), Color3.fromRGB(190, 150, 90), Enum.PartType.Ball)
-		part("Crackle", Vector3.new(0.5, 0.5, 0.5), Vector3.new(0.9, 2.1, 1.85), Color3.fromRGB(190, 150, 90), Enum.PartType.Ball)
-		part("Crackle", Vector3.new(0.5, 0.5, 0.5), Vector3.new(0, 0.6, 2.45), Color3.fromRGB(190, 150, 90), Enum.PartType.Ball)
-	elseif id == "mie-mafia" then
-		-- Noodle hair across the head, plus a mobster tie.
-		for _, x in ipairs({ -0.8, 0, 0.8 }) do
-			part("Noodle", Vector3.new(2.6, 0.5, 0.5), Vector3.new(x, headTopY + 0.15, 0), Color3.fromRGB(240, 200, 80), Enum.PartType.Cylinder, nil, CFrame.Angles(0, math.pi / 2, 0))
-		end
-		part("Tie", Vector3.new(0.6, 1.6, 0.2), Vector3.new(0, bodyTopY - 1.0, bodyD / 2 + 0.1), Color3.fromRGB(30, 30, 30))
-	elseif id == "bakso-blast" then
-		-- A fuse out of the bowl, with a spark on its tip.
-		part("Fuse", Vector3.new(1.6, 0.4, 0.4), Vector3.new(0, headTopY + 1.7, 0), Color3.fromRGB(60, 40, 20), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
-		part("Spark", Vector3.new(0.7, 0.7, 0.7), Vector3.new(0, headTopY + 2.6, 0), Color3.fromRGB(255, 220, 60), Enum.PartType.Ball, Enum.Material.Neon)
-	elseif id == "durian-doom" then
-		-- Spikes all over the body, not just the head.
-		part("BodySpike", Vector3.new(0.7, 1.5, 0.7), Vector3.new(0, bodyTopY + 0.4, 0), bodyColour)
+	elseif id == "sir-crustacio" then
+		-- Knight helmet + red plume, and a baguette sword held high.
+		part("KnightHelm", Vector3.new(headW + 0.2, 0.8, headD + 0.2), Vector3.new(0, headTopY + 0.4, 0), Color3.fromRGB(180, 180, 190))
+		part("Plume", Vector3.new(0.5, 1.2, 1.2), Vector3.new(0, headTopY + 1.4, 0), Color3.fromRGB(255, 60, 60))
+		part("Baguette", Vector3.new(0.7, 3.4, 0.7), Vector3.new(armX + 0.5, 2.6, 0), Color3.fromRGB(220, 170, 90), Enum.PartType.Block, nil, CFrame.Angles(0, 0, -0.4))
+	elseif id == "madame-flamingatto" then
+		-- Long neck, black sunglasses, and a handbag on one arm.
+		part("Neck", Vector3.new(2.0, 0.9, 0.9), Vector3.new(0, bodyTopY + 0.5, 0), bodyColour, Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
+		part("Sunglasses", Vector3.new(2.4, 0.6, 0.3), Vector3.new(0, headCentreY + 0.3, eyeZ + 0.1), Color3.fromRGB(20, 20, 20))
+		part("Handbag", Vector3.new(1.4, 1.2, 0.5), Vector3.new(armX + 0.3, -0.2, 0.3), Color3.fromRGB(200, 60, 140))
+		part("BagHandle", Vector3.new(0.8, 0.15, 0.15), Vector3.new(armX + 0.3, 0.5, 0.3), Color3.fromRGB(200, 60, 140))
+	elseif id == "turbo-tungtung" then
+		-- Antenna with a glowing tip, and a rocket pack on the back
+		-- with Neon flames underneath.
+		part("Antenna", Vector3.new(1.2, 0.25, 0.25), Vector3.new(0, headTopY + 0.6, 0), Color3.fromRGB(120, 120, 120), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
+		part("AntennaTip", Vector3.new(0.5, 0.5, 0.5), Vector3.new(0, headTopY + 1.4, 0), Color3.fromRGB(255, 120, 40), Enum.PartType.Ball, Enum.Material.Neon)
 		for _, sx in ipairs({ -1, 1 }) do
-			part("BodySpike", Vector3.new(0.7, 1.5, 0.7), Vector3.new(sx * 1.6, 2.3, 0), bodyColour, Enum.PartType.Block, nil, CFrame.Angles(0, 0, -sx * 0.5))
-			part("BodySpike", Vector3.new(0.7, 1.5, 0.7), Vector3.new(0, 2.3, sx * 1.6), bodyColour, Enum.PartType.Block, nil, CFrame.Angles(sx * 0.5, 0, 0))
+			part("Rocket", Vector3.new(1.8, 0.9, 0.9), Vector3.new(sx * 1.0, bodyCentreY + 0.6, -bodyD / 2 - 0.5), Color3.fromRGB(160, 160, 170), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
+			part("Flame", Vector3.new(0.8, 0.8, 0.8), Vector3.new(sx * 1.0, bodyCentreY - 0.6, -bodyD / 2 - 0.5), Color3.fromRGB(255, 140, 40), Enum.PartType.Ball, Enum.Material.Neon)
 		end
-	elseif id == "sambal-setan" then
-		-- Two horns on the head, leaning outward.
+	elseif id == "duchess-cactoona" then
+		-- Cactus branch arms, a pink flower on top, and two floating
+		-- musical notes (white Neon) drifting by her head.
 		for _, sx in ipairs({ -1, 1 }) do
-			part("Horn", Vector3.new(0.7, 1.8, 0.7), Vector3.new(sx * 1.0, headTopY + 0.7, 0), bodyColour, Enum.PartType.Block, nil, CFrame.Angles(0, 0, -sx * 0.45))
+			part("Branch", Vector3.new(0.8, 1.6, 0.8), Vector3.new(sx * (armX + 0.3), armY + 1.2, 0), bodyColour, Enum.PartType.Block, nil, CFrame.Angles(0, 0, sx * 0.5))
 		end
-	elseif id == "es-teh" then
-		-- Iced tea: amber tea top and ice cubes floating in the glass.
-		part("TeaTop", Vector3.new(0.3, 3.8, 3.8), Vector3.new(0, bodyTopY + 0.05, 0), Color3.fromRGB(180, 110, 40), Enum.PartType.Cylinder, nil, CFrame.Angles(0, 0, math.pi / 2))
+		part("Flower", Vector3.new(0.9, 0.9, 0.9), Vector3.new(0, headTopY + 0.45, 0), Color3.fromRGB(255, 120, 200), Enum.PartType.Ball)
 		for _, sx in ipairs({ -1, 1 }) do
-			part("Ice", Vector3.new(0.9, 0.9, 0.9), Vector3.new(sx * 1.1, bodyTopY + 0.3, 0), Color3.fromRGB(235, 245, 255))
+			part("NoteStem", Vector3.new(0.2, 0.9, 0.2), Vector3.new(sx * 1.8, headTopY + 1.2, 0.5), Color3.fromRGB(255, 255, 255), Enum.PartType.Block, Enum.Material.Neon)
+			part("NoteHead", Vector3.new(0.45, 0.45, 0.45), Vector3.new(sx * 1.8, headTopY + 0.7, 0.5), Color3.fromRGB(255, 255, 255), Enum.PartType.Ball, Enum.Material.Neon)
 		end
-	elseif id == "gado-golem" then
-		-- Wide shoulders on the gentle giant.
+	elseif id == "glorpo-ghost-burger" then
+		-- Burger layers between body and bun: patty + lettuce.
+		part("Patty", Vector3.new(3.4, 0.7, 3.4), Vector3.new(0, bodyTopY + 0.1, 0), Color3.fromRGB(120, 70, 40), Enum.PartType.Block, nil, nil, 0.35)
+		part("Lettuce", Vector3.new(3.8, 0.3, 3.8), Vector3.new(0, bodyTopY + 0.55, 0), Color3.fromRGB(90, 200, 80), Enum.PartType.Block, nil, nil, 0.35)
+	elseif id == "baron-vroomvroom" then
+		-- Windshield, moustache, headlights, four wheels and a spoiler.
+		part("Windshield", Vector3.new(2.2, 1.0, 0.2), Vector3.new(0, headCentreY + 0.1, headD / 2 + 0.1), Color3.fromRGB(40, 80, 140))
 		for _, sx in ipairs({ -1, 1 }) do
-			part("Shoulder", Vector3.new(1.6, 1.2, 3.0), Vector3.new(sx * 3.0, bodyTopY - 0.3, 0), bodyColour)
+			part("Moustache", Vector3.new(0.9, 0.3, 0.2), Vector3.new(sx * 0.45, 1.0, bodyD / 2 + 0.1), Color3.fromRGB(30, 20, 10), Enum.PartType.Block, nil, CFrame.Angles(0, 0, -sx * 0.35))
+			part("Headlight", Vector3.new(0.5, 0.5, 0.5), Vector3.new(sx * 1.5, 0.6, bodyD / 2 + 0.1), Color3.fromRGB(255, 240, 150), Enum.PartType.Ball, Enum.Material.Neon)
+			for _, wz in ipairs({ -1.2, 1.2 }) do
+				part("Wheel", Vector3.new(0.5, 1.4, 1.4), Vector3.new(sx * 1.9, -0.6, wz), Color3.fromRGB(25, 25, 25), Enum.PartType.Cylinder)
+			end
 		end
-	elseif id == "krakatoa-king" then
-		-- Lava cracks glowing down the chest.
-		for _, x in ipairs({ -0.8, 0.8 }) do
-			part("LavaCrack", Vector3.new(0.4, 2.2, 0.2), Vector3.new(x, bodyCentreY + 0.2, bodyD / 2 + 0.1), Color3.fromRGB(255, 140, 40), Enum.PartType.Block, Enum.Material.Neon)
+		part("Spoiler", Vector3.new(3.0, 0.3, 0.8), Vector3.new(0, 2.0, -bodyD / 2 - 0.2), Color3.fromRGB(180, 20, 20))
+	elseif id == "blobfather" then
+		-- Gold crown, a tiny tilted hat on top of it, and three
+		-- orbiting glitch cubes (a systems phase animates the orbit).
+		part("Crown", Vector3.new(3.0, 0.7, 3.0), Vector3.new(0, headTopY + 0.35, 0), Color3.fromRGB(255, 210, 60), Enum.PartType.Block, Enum.Material.Neon)
+		for _, x in ipairs({ -1.1, 0, 1.1 }) do
+			part("CrownPoint", Vector3.new(0.6, 1.0, 0.6), Vector3.new(x, headTopY + 1.2, 0), Color3.fromRGB(255, 210, 60), Enum.PartType.Block, Enum.Material.Neon)
 		end
-	elseif id == "lava-lontong" then
-		-- Lava drips running down the rice cake.
-		for _, x in ipairs({ -1.2, 0, 1.2 }) do
-			part("LavaDrip", Vector3.new(0.8, 0.8, 0.8), Vector3.new(x, bodyCentreY + 0.5, bodyD / 2 - 0.1), Color3.fromRGB(255, 200, 60), Enum.PartType.Ball, Enum.Material.Neon)
-		end
+		part("TinyHat", Vector3.new(1.2, 0.5, 1.2), Vector3.new(1.3, headTopY + 1.7, 0), Color3.fromRGB(30, 30, 30), Enum.PartType.Block, nil, CFrame.Angles(0, 0, 0.4))
+		part("GlitchCube", Vector3.new(0.7, 0.7, 0.7), Vector3.new(3.4, 1.5, 0), Color3.fromRGB(80, 230, 255), Enum.PartType.Block, Enum.Material.Neon)
+		part("GlitchCube", Vector3.new(0.7, 0.7, 0.7), Vector3.new(-2.4, 2.8, 2.4), Color3.fromRGB(255, 120, 220), Enum.PartType.Block, Enum.Material.Neon)
+		part("GlitchCube", Vector3.new(0.7, 0.7, 0.7), Vector3.new(0, 3.6, -3.4), Color3.fromRGB(255, 240, 90), Enum.PartType.Block, Enum.Material.Neon)
 	end
 
 	model.PrimaryPart = body
@@ -269,6 +314,35 @@ function BrainrotServer.buildModel(entry)
 	-- target lands the feet on the floor: belt y=2.7 -> feet at 1.2,
 	-- pad y=2.9 -> feet at 1.4. Set after PrimaryPart, so it sticks.
 	model.PivotOffset = CFrame.new(0, -bodyCentreY, 0)
+
+	-- Rarity aura: a ParticleEmitter on the body, brighter and busier
+	-- for higher rarities. Secret gets the biggest show.
+	local rarityRank = { Common = 1, Rare = 2, Epic = 3, Legendary = 4, Mythic = 5, Secret = 6 }
+	local rank = rarityRank[entry.rarity] or 1
+	local aura = Instance.new("ParticleEmitter")
+	aura.Name = "RarityAura"
+	aura.Color = ColorSequence.new(rarityColour)
+	aura.Rate = 2 + rank * 6
+	aura.Lifetime = NumberRange.new(0.6, 1.2)
+	aura.Size = NumberSequence.new(0.4 + rank * 0.15)
+	aura.Speed = NumberRange.new(1, 2)
+	aura.Transparency = NumberSequence.new(0.3, 0.9)
+	aura.Parent = body
+
+	-- Glitch mutation: a flickering Neon spark on the model, and the
+	-- aura tinted glitch-purple. The colour cycling itself is done by
+	-- the walk loop (a systems phase), which owns the flicker.
+	if mutationId == "Glitch" then
+		part("GlitchSpark", Vector3.new(0.8, 0.8, 0.8), Vector3.new(1.8, headTopY + 0.5, 0), mutationColour, Enum.PartType.Ball, Enum.Material.Neon)
+		aura.Color = ColorSequence.new(mutationColour)
+	end
+
+	-- Idle-animation marker: a systems phase animates this in the walk
+	-- loop ("bob" | "spin" | "bounce"). No Heartbeat here.
+	local idle = Instance.new("StringValue")
+	idle.Name = "IdleType"
+	idle.Value = idleType
+	idle.Parent = model
 
 	-- Floating label: name, rarity, mutation and $/second.
 	local gui = Instance.new("BillboardGui")
@@ -291,7 +365,6 @@ function BrainrotServer.buildModel(entry)
 	rateLabel.Position = UDim2.new(0, 0, 0.5, 0)
 	rateLabel.Size = UDim2.new(1, 0, 0.5, 0)
 	rateLabel.BackgroundTransparency = 1
-	local rarityColour = Config.RarityColour[entry.rarity] or Color3.fromRGB(255, 255, 255)
 	rateLabel.Text = entry.rarity .. " " .. entry.mutation .. " - " .. Config.formatMoney(entry.rate * entry.mutationMult) .. "/s"
 	rateLabel.TextColor3 = rarityColour
 	rateLabel.TextScaled = true

@@ -5,22 +5,62 @@
     "Lighting": {
       "$properties": {
         "Ambient": [
-          0.12,
-          0.14,
+          0.1,
+          0.08,
           0.2
         ],
-        "Brightness": 2,
-        "ClockTime": 10,
+        "Brightness": 1.5,
+        "ClockTime": 0,
         "FogColor": [
-          0.62,
-          0.75,
-          0.85
+          0.1,
+          0.08,
+          0.2
         ],
         "FogEnd": 600,
-        "FogStart": 200,
+        "FogStart": 150,
         "GlobalShadows": true,
         "Outlines": false,
         "Technology": "Voxel"
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.35,
+          "Offset": 0.2,
+          "Color": [
+            0.4,
+            0.3,
+            0.8
+          ],
+          "Decay": [
+            0.6,
+            0.4,
+            0.9
+          ],
+          "Glare": 0.3,
+          "Haze": 1.5
+        }
+      },
+      "BloomEffect": {
+        "$className": "BloomEffect",
+        "$properties": {
+          "Intensity": 0.8,
+          "Size": 24,
+          "Threshold": 0.7
+        }
+      },
+      "ColorCorrectionEffect": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": {
+          "Brightness": 0.05,
+          "Contrast": 0.15,
+          "Saturation": 0.25,
+          "TintColor": [
+            1,
+            0.95,
+            1
+          ]
+        }
       }
     },
     "Players": {
