@@ -414,29 +414,29 @@ local function buildModelInner(entry)
 	-- Mythic gets 2 lights, Secret gets 3 (biggest, brightest).
 	local glow = Instance.new("PointLight")
 	glow.Color = rarityColour
-	glow.Range = 10 + rank
-	glow.Brightness = 1 + rank * 0.2
+	glow.Range = 7 + rank
+	glow.Brightness = 0.6 + rank * 0.1
 	glow.Parent = body
 	if rank >= 5 then
 		local glow2 = Instance.new("PointLight")
 		glow2.Color = Color3.fromRGB(255, 255, 255)
-		glow2.Range = 14
-		glow2.Brightness = 1
+		glow2.Range = 9
+		glow2.Brightness = 0.6
 		glow2.Parent = body
 	end
 	if rank >= 6 then
 		local glow3 = Instance.new("PointLight")
 		glow3.Color = Color3.fromRGB(255, 120, 220)
-		glow3.Range = 18
-		glow3.Brightness = 1.2
+		glow3.Range = 11
+		glow3.Brightness = 0.7
 		glow3.Parent = body
 	end
 	-- Gosong ember light: orange glow so the charred body still reads.
 	if emberLight then
 		local ember = Instance.new("PointLight")
 		ember.Color = Color3.fromRGB(255, 90, 30)
-		ember.Range = 10
-		ember.Brightness = 1.5
+		ember.Range = 7
+		ember.Brightness = 0.9
 		ember.Parent = body
 	end
 

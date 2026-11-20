@@ -199,7 +199,7 @@ function WorldBuilder.buildBase(index, centre)
 
 	-- Warm stall light under the awning.
 	local stallLamp = decor("StallLamp", Vector3.new(1, 0.4, 1), centre + Vector3.new(0, 5.5, 0), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder)
-	light(stallLamp, Color3.fromRGB(255, 200, 130), 15, 1.5)
+	light(stallLamp, Color3.fromRGB(255, 200, 130), 10, 0.8)
 
 	-- Gate posts and a flag on the back wall.
 	decor("GatePostL", Vector3.new(1, 5, 1), centre - outward * 6.5 + sideDir * 8.5 + Vector3.new(0, 3.5, 0), accent, Enum.Material.SmoothPlastic, folder)
@@ -253,7 +253,7 @@ local function decorateBelt(folder)
 			bulbColour = Color3.fromRGB(60, 220, 255)
 		end
 		local beltBulb = ball("BeltLampBulb", 1, Vector3.new(lx, 4, -halfW - 0.4), bulbColour, Enum.Material.Neon, folder, 0)
-		light(beltBulb, bulbColour, 15, 1.2)
+		light(beltBulb, bulbColour, 10, 0.7)
 	end
 	for x = beltStart + 8, beltEnd - 8, 20 do
 		decor("BeltRoller", Vector3.new(1, 0.12, Config.Belt.width - 1), Vector3.new(x, 1.26, 0), Color3.fromRGB(220, 190, 110), Enum.Material.Metal, folder)
@@ -320,7 +320,7 @@ local function decorateStalls(folder)
 				decor("StallAwning", Vector3.new(8, 0.3, 2.2), Vector3.new(x, 5.9, z - 2.2 + i * 2.2), colour, Enum.Material.SmoothPlastic, folder)
 			end
 			local stallLamp = decor("StallLamp", Vector3.new(1, 0.4, 1), Vector3.new(x, 5, z), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder)
-			light(stallLamp, Color3.fromRGB(255, 200, 130), 12, 1.2)
+			light(stallLamp, Color3.fromRGB(255, 200, 130), 9, 0.7)
 			local kept = keptStallSigns[n]
 			if kept then
 				local sign = decor("StallSign", Vector3.new(5, 2, 0.4), Vector3.new(x, kept[2], z), Color3.fromRGB(65, 65, 85), Enum.Material.SmoothPlastic, folder)
@@ -346,9 +346,9 @@ local function decorateStringLights(folder)
 		decor("LightPoleN", Vector3.new(0.4, 10, 0.4), Vector3.new(x, 5, -12.5), Color3.fromRGB(150, 150, 170), Enum.Material.Metal, folder)
 		decor("LightPoleS", Vector3.new(0.4, 10, 0.4), Vector3.new(x, 5, 12.5), Color3.fromRGB(150, 150, 170), Enum.Material.Metal, folder)
 		local bulbN = ball("LampBulb", 1.2, Vector3.new(x, 10.4, -12.5), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder, 0)
-		light(bulbN, Color3.fromRGB(255, 200, 130), 25, 1.5)
+		light(bulbN, Color3.fromRGB(255, 200, 130), 14, 0.8)
 		local bulbS = ball("LampBulb", 1.2, Vector3.new(x, 10.4, 12.5), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder, 0)
-		light(bulbS, Color3.fromRGB(255, 200, 130), 25, 1.5)
+		light(bulbS, Color3.fromRGB(255, 200, 130), 14, 0.8)
 		for i = 0, 8 do
 			local t = i / 8
 			local z = -12 + t * 24
@@ -411,7 +411,7 @@ local function decorateStatue(folder)
 	decor("StatueBodyTop", Vector3.new(6, 3, 4), base + Vector3.new(0, 13, 0), white, Enum.Material.SmoothPlastic, folder)
 	-- Disco-ball head (uniform ball) with a ninja headband.
 	local head = ball("StatueHead", 5, base + Vector3.new(0, 17, 0), Color3.fromRGB(200, 220, 255), Enum.Material.Metal, folder, 0)
-	light(head, Color3.fromRGB(200, 220, 255), 30, 2)
+	light(head, Color3.fromRGB(200, 220, 255), 16, 0.8)
 	decor("StatueBand", Vector3.new(5.2, 1, 5.2), base + Vector3.new(0, 17.5, 0), pink, Enum.Material.Neon, folder)
 	decor("StatueBandTail", Vector3.new(0.8, 4, 0.3), base + Vector3.new(3, 15, -2), pink, Enum.Material.Neon, folder)
 	-- Glowing eyes on the head.
