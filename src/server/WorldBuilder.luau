@@ -75,7 +75,7 @@ local function label(parent, text, colour, size, widthPx)
 	local t = Instance.new("TextLabel")
 	t.Size = UDim2.fromScale(1, 1)
 	t.BackgroundTransparency = 0.35
-	t.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+	t.BackgroundColor3 = Color3.fromRGB(65, 65, 85)
 	t.TextColor3 = colour or Color3.fromRGB(255, 255, 255)
 	t.Text = text
 	t.TextScaled = false
@@ -190,20 +190,20 @@ function WorldBuilder.buildBase(index, centre)
 	end
 
 	-- Floor: dark market tile, slightly alternating per stall.
-	local floorColour = Color3.fromRGB(45, 45, 60)
+	local floorColour = Color3.fromRGB(100, 100, 125)
 	if index % 2 == 0 then
-		floorColour = Color3.fromRGB(60, 45, 55)
+		floorColour = Color3.fromRGB(115, 100, 110)
 	end
 	part("Floor", Vector3.new(18, 1, 14), centre + Vector3.new(0, 0.5, 0), floorColour, Enum.Material.SmoothPlastic, folder)
 
 	-- Back wall faces away from the street; the front stays open.
 	local backPos = centre + outward * 6.5
-	part("BackWall", Vector3.new(18, 6, 1), backPos + Vector3.new(0, 3, 0), Color3.fromRGB(35, 35, 50), Enum.Material.Concrete, folder)
-	part("SideWallL", Vector3.new(1, 4, 14), centre + sideDir * 8.5 + Vector3.new(0, 2, 0), Color3.fromRGB(35, 35, 50), Enum.Material.Concrete, folder)
-	part("SideWallR", Vector3.new(1, 4, 14), centre - sideDir * 8.5 + Vector3.new(0, 2, 0), Color3.fromRGB(35, 35, 50), Enum.Material.Concrete, folder)
+	part("BackWall", Vector3.new(18, 6, 1), backPos + Vector3.new(0, 3, 0), Color3.fromRGB(95, 95, 120), Enum.Material.Concrete, folder)
+	part("SideWallL", Vector3.new(1, 4, 14), centre + sideDir * 8.5 + Vector3.new(0, 2, 0), Color3.fromRGB(95, 95, 120), Enum.Material.Concrete, folder)
+	part("SideWallR", Vector3.new(1, 4, 14), centre - sideDir * 8.5 + Vector3.new(0, 2, 0), Color3.fromRGB(95, 95, 120), Enum.Material.Concrete, folder)
 
 	-- Neon sign board above the back wall, in the stall's accent.
-	local signBoard = decor("SignBoard", Vector3.new(10, 2.5, 0.5), backPos + Vector3.new(0, 7.2, 0), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
+	local signBoard = decor("SignBoard", Vector3.new(10, 2.5, 0.5), backPos + Vector3.new(0, 7.2, 0), Color3.fromRGB(65, 65, 85), Enum.Material.SmoothPlastic, folder)
 	label(signBoard, "BASE " .. tostring(index), accent, 14)
 	decorR("SignTrim", Vector3.new(10, 0.4, 0.6), backPos + Vector3.new(0, 5.9, 0), accent, Enum.Material.Neon, folder, yaw)
 
@@ -224,8 +224,10 @@ function WorldBuilder.buildBase(index, centre)
 	end
 
 	-- Counter near the front, between the front pads and the gate.
-	decorR("Counter", Vector3.new(10, 1.6, 1.6), centre + rotate(Vector3.new(0, 0, 5.8)) + Vector3.new(0, 1.8, 0), Color3.fromRGB(120, 85, 50), Enum.Material.Wood, folder, yaw)
-	decorR("CounterTop", Vector3.new(10.4, 0.3, 2), centre + rotate(Vector3.new(0, 0, 5.8)) + Vector3.new(0, 2.7, 0), accent, Enum.Material.Neon, folder, yaw)
+	-- Kept LOW (top y=1.3, below the pedestal characters' feet at
+	-- 1.4) so it never hides the characters on the front pads.
+	decorR("Counter", Vector3.new(10, 1.0, 1.6), centre + rotate(Vector3.new(0, 0, 5.8)) + Vector3.new(0, 0.5, 0), Color3.fromRGB(120, 85, 50), Enum.Material.Wood, folder, yaw)
+	decorR("CounterTop", Vector3.new(10.4, 0.3, 2), centre + rotate(Vector3.new(0, 0, 5.8)) + Vector3.new(0, 1.15, 0), accent, Enum.Material.Neon, folder, yaw)
 
 	-- Warm stall light under the awning, so the stall, its pedestals
 	-- and any brainrots on them read clearly at night.
@@ -244,7 +246,7 @@ function WorldBuilder.buildBase(index, centre)
 	for slot, offset in ipairs(SLOT_OFFSETS) do
 		local rotated = rotate(offset)
 		local padCentre = centre + rotated
-		decor("Pedestal" .. tostring(slot), Vector3.new(2.8, 1, 2.8), padCentre + Vector3.new(0, 0.5, 0), Color3.fromRGB(30, 30, 42), Enum.Material.SmoothPlastic, folder)
+		decor("Pedestal" .. tostring(slot), Vector3.new(2.8, 1, 2.8), padCentre + Vector3.new(0, 0.5, 0), Color3.fromRGB(100, 100, 125), Enum.Material.SmoothPlastic, folder)
 		decor("PedestalGlow" .. tostring(slot), Vector3.new(3.8, 0.15, 3.8), padCentre + Vector3.new(0, 1.08, 0), accent, Enum.Material.Neon, folder)
 		local pad = part("Slot" .. tostring(slot), Vector3.new(3.4, 0.4, 3.4), padCentre + Vector3.new(0, 1.2, 0), Color3.fromRGB(255, 255, 255), Enum.Material.SmoothPlastic, folder)
 		pad.Transparency = 0.35
@@ -280,15 +282,15 @@ local function decorateBelt(folder)
 	local beltEnd = beltStart + Config.Belt.length
 	local midX = beltStart + Config.Belt.length / 2
 	local halfW = Config.Belt.width / 2
-	decor("BeltSkirtN", Vector3.new(Config.Belt.length, 1, 0.8), Vector3.new(midX, 0.7, -halfW - 0.4), Color3.fromRGB(25, 25, 35), Enum.Material.Metal, folder)
-	decor("BeltSkirtS", Vector3.new(Config.Belt.length, 1, 0.8), Vector3.new(midX, 0.7, halfW + 0.4), Color3.fromRGB(25, 25, 35), Enum.Material.Metal, folder)
+	decor("BeltSkirtN", Vector3.new(Config.Belt.length, 1, 0.8), Vector3.new(midX, 0.7, -halfW - 0.4), Color3.fromRGB(85, 85, 110), Enum.Material.Metal, folder)
+	decor("BeltSkirtS", Vector3.new(Config.Belt.length, 1, 0.8), Vector3.new(midX, 0.7, halfW + 0.4), Color3.fromRGB(85, 85, 110), Enum.Material.Metal, folder)
 	decor("BeltRailN", Vector3.new(Config.Belt.length, 0.3, 0.4), Vector3.new(midX, 1.35, -halfW - 0.4), Color3.fromRGB(255, 60, 180), Enum.Material.Neon, folder)
 	decor("BeltRailS", Vector3.new(Config.Belt.length, 0.3, 0.4), Vector3.new(midX, 1.35, halfW + 0.4), Color3.fromRGB(60, 220, 255), Enum.Material.Neon, folder)
 	-- Belt lamps: short posts on the north rail with a glowing bulb and
 	-- a real PointLight, so the belt and the brainrots walking it are
 	-- lit. Clear of the walking path (z=-4.4, characters walk at z=0).
 	for i, lx in ipairs({ -60, -20, 20, 60 }) do
-		decor("BeltLampPost", Vector3.new(0.4, 2.5, 0.4), Vector3.new(lx, 2.6, -halfW - 0.4), Color3.fromRGB(60, 60, 75), Enum.Material.Metal, folder)
+		decor("BeltLampPost", Vector3.new(0.4, 2.5, 0.4), Vector3.new(lx, 2.6, -halfW - 0.4), Color3.fromRGB(90, 90, 110), Enum.Material.Metal, folder)
 		local bulbColour = Color3.fromRGB(255, 60, 180)
 		if i % 2 == 0 then
 			bulbColour = Color3.fromRGB(60, 220, 255)
@@ -310,11 +312,11 @@ end
 local function decorateArch(folder)
 	local pink = Color3.fromRGB(255, 60, 180)
 	local cyan = Color3.fromRGB(60, 220, 255)
-	decor("ArchPostN", Vector3.new(1.5, 14, 1.5), Vector3.new(0, 7, -13), Color3.fromRGB(40, 40, 55), Enum.Material.Metal, folder)
-	decor("ArchPostS", Vector3.new(1.5, 14, 1.5), Vector3.new(0, 7, 13), Color3.fromRGB(40, 40, 55), Enum.Material.Metal, folder)
+	decor("ArchPostN", Vector3.new(1.5, 14, 1.5), Vector3.new(0, 7, -13), Color3.fromRGB(130, 130, 160), Enum.Material.Metal, folder)
+	decor("ArchPostS", Vector3.new(1.5, 14, 1.5), Vector3.new(0, 7, 13), Color3.fromRGB(130, 130, 160), Enum.Material.Metal, folder)
 	decor("ArchPostTrimN", Vector3.new(1.7, 0.5, 1.7), Vector3.new(0, 13.5, -13), pink, Enum.Material.Neon, folder)
 	decor("ArchPostTrimS", Vector3.new(1.7, 0.5, 1.7), Vector3.new(0, 13.5, 13), cyan, Enum.Material.Neon, folder)
-	local beam = decor("ArchBeam", Vector3.new(2, 3, 28), Vector3.new(0, 14.5, 0), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
+	local beam = decor("ArchBeam", Vector3.new(2, 3, 28), Vector3.new(0, 14.5, 0), Color3.fromRGB(65, 65, 85), Enum.Material.SmoothPlastic, folder)
 	label(beam, "BRAINROT BAZAAR", Color3.fromRGB(255, 220, 60), 16, 200)
 	decor("ArchBeamTrim", Vector3.new(2.2, 0.4, 28), Vector3.new(0, 13, 0), pink, Enum.Material.Neon, folder)
 	-- A row of little neon bulbs along the top of the beam.
@@ -371,7 +373,7 @@ local function decorateStalls(folder)
 			light(stallLamp, Color3.fromRGB(255, 200, 130), 12, 1.2)
 			local kept = keptStallSigns[n]
 			if kept then
-				local sign = decor("StallSign", Vector3.new(5, 2, 0.4), Vector3.new(x, kept[2], z), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
+				local sign = decor("StallSign", Vector3.new(5, 2, 0.4), Vector3.new(x, kept[2], z), Color3.fromRGB(65, 65, 85), Enum.Material.SmoothPlastic, folder)
 				label(sign, kept[1], accent, 13)
 			end
 			-- Steam puff above the counter (uniform ball, transparent).
@@ -393,8 +395,8 @@ local function decorateStringLights(folder)
 		Color3.fromRGB(60, 220, 255),
 	}
 	for li, x in ipairs({ -50, -25, 25, 50 }) do
-		decor("LightPoleN", Vector3.new(0.4, 10, 0.4), Vector3.new(x, 5, -12.5), Color3.fromRGB(60, 60, 75), Enum.Material.Metal, folder)
-		decor("LightPoleS", Vector3.new(0.4, 10, 0.4), Vector3.new(x, 5, 12.5), Color3.fromRGB(60, 60, 75), Enum.Material.Metal, folder)
+		decor("LightPoleN", Vector3.new(0.4, 10, 0.4), Vector3.new(x, 5, -12.5), Color3.fromRGB(90, 90, 110), Enum.Material.Metal, folder)
+		decor("LightPoleS", Vector3.new(0.4, 10, 0.4), Vector3.new(x, 5, 12.5), Color3.fromRGB(90, 90, 110), Enum.Material.Metal, folder)
 		-- Warm lamp bulb on top of each pole, with a real PointLight
 		-- so the street and sidewalks are actually lit, not just neon.
 		local bulbN = ball("LampBulb", 1.2, Vector3.new(x, 10.4, -12.5), Color3.fromRGB(255, 220, 150), Enum.Material.Neon, folder, 0)
@@ -441,7 +443,7 @@ local function decoratePlaza(folder)
 	decor("PlazaTrimTop", Vector3.new(22.5, 0.4, 22.5), Vector3.new(0, 14.2, -96), Color3.fromRGB(255, 60, 180), Enum.Material.Neon, folder)
 	for _, dx in ipairs({ -9, 9 }) do
 		for _, dz in ipairs({ -9, 9 }) do
-			decor("PlazaPost", Vector3.new(0.8, 4, 0.8), Vector3.new(dx, 17, -96 + dz), Color3.fromRGB(40, 40, 55), Enum.Material.Metal, folder)
+			decor("PlazaPost", Vector3.new(0.8, 4, 0.8), Vector3.new(dx, 17, -96 + dz), Color3.fromRGB(130, 130, 160), Enum.Material.Metal, folder)
 			ball("PlazaGlow", 1.5, Vector3.new(dx, 19.4, -96 + dz), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder, 0)
 		end
 	end
@@ -471,7 +473,7 @@ local function decorateShop(folder)
 	end
 	decor("ShopCounter", Vector3.new(10, 2, 2), Vector3.new(0, 2.2, 77.5), wood, Enum.Material.Wood, folder)
 	decor("ShopCounterTop", Vector3.new(10.4, 0.3, 2.4), Vector3.new(0, 3.3, 77.5), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder)
-	local sign = decor("ShopSign", Vector3.new(8, 2, 0.4), Vector3.new(0, 7.2, 72), Color3.fromRGB(20, 20, 30), Enum.Material.SmoothPlastic, folder)
+	local sign = decor("ShopSign", Vector3.new(8, 2, 0.4), Vector3.new(0, 7.2, 72), Color3.fromRGB(65, 65, 85), Enum.Material.SmoothPlastic, folder)
 	label(sign, "SHOP", Color3.fromRGB(255, 220, 60), 14)
 end
 
@@ -501,7 +503,7 @@ local function decorateSkyline(folder)
 	}
 	for i, b in ipairs(buildings) do
 		local h = b[4]
-		decor("Skyline", Vector3.new(b[3], h, b[5]), Vector3.new(b[1], h / 2, b[2]), Color3.fromRGB(18, 18, 30), Enum.Material.SmoothPlastic, folder)
+		decor("Skyline", Vector3.new(b[3], h, b[5]), Vector3.new(b[1], h / 2, b[2]), Color3.fromRGB(50, 50, 70), Enum.Material.SmoothPlastic, folder)
 		local wc = winCols[((i - 1) % #winCols) + 1]
 		for _, wy in ipairs({ h * 0.35, h * 0.65 }) do
 			decor("SkylineWindows", Vector3.new(b[3] + 0.2, 1, b[5] * 0.6), Vector3.new(b[1], wy, b[2]), wc, Enum.Material.Neon, folder)
@@ -535,11 +537,11 @@ function WorldBuilder.build()
 
 	-- Ground slab: dark night-market ground filling the whole view, so
 	-- no bare baseplate studs show. Top y=0.
-	local ground = part("Ground", Vector3.new(260, 2, 260), Vector3.new(0, -1, 0), Color3.fromRGB(28, 28, 40), Enum.Material.SmoothPlastic, folder)
+	local ground = part("Ground", Vector3.new(260, 2, 260), Vector3.new(0, -1, 0), Color3.fromRGB(75, 75, 100), Enum.Material.SmoothPlastic, folder)
 	ground.TopSurface = Enum.SurfaceType.Smooth
 
 	-- The street: dark asphalt strip under the belt, 200 long, 24 wide.
-	local street = part("Street", Vector3.new(200, 1, 24), Vector3.new(0, 0, 0), Color3.fromRGB(35, 35, 48), Enum.Material.SmoothPlastic, folder)
+	local street = part("Street", Vector3.new(200, 1, 24), Vector3.new(0, 0, 0), Color3.fromRGB(90, 90, 115), Enum.Material.SmoothPlastic, folder)
 	street.TopSurface = Enum.SurfaceType.Smooth
 	-- Neon edge strips: hot pink north, cyan south.
 	decor("StreetEdgeN", Vector3.new(200, 0.15, 0.6), Vector3.new(0, 0.55, -12), Color3.fromRGB(255, 60, 180), Enum.Material.Neon, folder)
@@ -552,16 +554,16 @@ function WorldBuilder.build()
 	end
 
 	-- Sidewalks on both sides of the street, up to the stall fronts.
-	local walkN = part("SidewalkN", Vector3.new(200, 1, 13), Vector3.new(0, 0, -18.5), Color3.fromRGB(48, 48, 64), Enum.Material.Concrete, folder)
+	local walkN = part("SidewalkN", Vector3.new(200, 1, 13), Vector3.new(0, 0, -18.5), Color3.fromRGB(95, 95, 120), Enum.Material.Concrete, folder)
 	walkN.TopSurface = Enum.SurfaceType.Smooth
-	local walkS = part("SidewalkS", Vector3.new(200, 1, 13), Vector3.new(0, 0, 18.5), Color3.fromRGB(48, 48, 64), Enum.Material.Concrete, folder)
+	local walkS = part("SidewalkS", Vector3.new(200, 1, 13), Vector3.new(0, 0, 18.5), Color3.fromRGB(95, 95, 120), Enum.Material.Concrete, folder)
 	walkS.TopSurface = Enum.SurfaceType.Smooth
 
 	-- The safe plaza: stepped neon platform, top at y=15, centre
 	-- (0, 15, -96) — the spot WaveServer treats as safe.
-	part("PlazaBase", Vector3.new(36, 8, 36), Vector3.new(0, 4, -96), Color3.fromRGB(30, 30, 48), Enum.Material.Slate, folder)
-	part("PlazaTop", Vector3.new(22, 6, 22), Vector3.new(0, 11, -96), Color3.fromRGB(38, 38, 58), Enum.Material.Slate, folder)
-	part("PlazaPad", Vector3.new(20, 1, 20), Vector3.new(0, 14.5, -96), Color3.fromRGB(48, 48, 70), Enum.Material.Slate, folder)
+	part("PlazaBase", Vector3.new(36, 8, 36), Vector3.new(0, 4, -96), Color3.fromRGB(75, 75, 100), Enum.Material.Slate, folder)
+	part("PlazaTop", Vector3.new(22, 6, 22), Vector3.new(0, 11, -96), Color3.fromRGB(85, 85, 110), Enum.Material.Slate, folder)
+	part("PlazaPad", Vector3.new(20, 1, 20), Vector3.new(0, 14.5, -96), Color3.fromRGB(100, 100, 125), Enum.Material.Slate, folder)
 	-- (No SAFE PLAZA label: it floated over the plaza and stacked with the other signs.)
 
 	-- The belt: the runway brainrots walk, west end to east end.
@@ -569,7 +571,7 @@ function WorldBuilder.build()
 	-- spawn point and the walk code can never disagree about its ends.
 	local beltStart = Config.Belt.startX
 	local beltEnd = beltStart + Config.Belt.length
-	part("Belt", Vector3.new(Config.Belt.length, 1, Config.Belt.width), Vector3.new(beltStart + Config.Belt.length / 2, 0.7, 0), Color3.fromRGB(40, 40, 55), Enum.Material.Concrete, folder)
+	part("Belt", Vector3.new(Config.Belt.length, 1, Config.Belt.width), Vector3.new(beltStart + Config.Belt.length / 2, 0.7, 0), Color3.fromRGB(130, 130, 160), Enum.Material.Concrete, folder)
 	-- (No belt label: the old "BRAINROT BELT - hold E..." text floated over the whole street.)
 	part("BeltStart", Vector3.new(8, 1.4, 10), Vector3.new(beltStart, 0.9, 0), Color3.fromRGB(255, 120, 40), Enum.Material.Neon, folder)
 	part("BeltEnd", Vector3.new(8, 1.4, 10), Vector3.new(beltEnd, 0.9, 0), Color3.fromRGB(60, 160, 255), Enum.Material.Neon, folder)

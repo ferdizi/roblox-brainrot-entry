@@ -65,8 +65,29 @@ local function buildModelInner(entry)
 			end
 		end
 	end
-	local bodyColour = mutationColour or entry.colour
-	local darkColour = Color3.new(bodyColour.R * 0.65, bodyColour.G * 0.65, bodyColour.B * 0.65)
+	-- SCALE: every character is built 1.4x bigger so it reads from
+	-- across the street. The scale is applied to the finished model
+	-- (see the scale block before `return model`); the feet stay at
+	-- local y=-1.5, so the belt/pad pivot math never changes.
+	local SCALE = 1.4
+	-- Brighten a body colour so it never reads as a dark blob at
+	-- dusk: scale it until its brightest channel hits 0.85, keeping
+	-- the hue. (A dark brown log becomes a bright orange-brown; a
+	-- dark grey becomes a light grey-blue.) Mutation colours are
+	-- already bright, so only the base cast colour goes through here.
+	local function brighten(colour)
+		local m = math.max(colour.R, colour.G, colour.B)
+		if m < 0.85 then
+			local s = 0.85 / m
+			return Color3.new(
+				math.min(colour.R * s, 1),
+				math.min(colour.G * s, 1),
+				math.min(colour.B * s, 1))
+		end
+		return colour
+	end
+	local bodyColour = mutationColour or brighten(entry.colour)
+	local darkColour = Color3.new(bodyColour.R * 0.8, bodyColour.G * 0.8, bodyColour.B * 0.8)
 	local rarityColour = Config.RarityColour[entry.rarity] or Color3.fromRGB(255, 255, 255)
 
 	-- One helper builds every part: anchored, non-colliding, parented.
@@ -177,6 +198,11 @@ local function buildModelInner(entry)
 	end
 	local bodyTransparency = ghostly and 0.35 or nil
 	local body = part("Body", bodySize, Vector3.new(0, bodyCentreY, 0), bodyColour, bodyShape, bodyMaterial, bodyRot, bodyTransparency)
+
+	-- Neon torso band in the rarity colour: a glowing sash around the
+	-- body so the character reads as a lit-up figure at dusk, not a
+	-- dark blob. (The scale block grows it with the rest of the model.)
+	part("NeonBand", Vector3.new(bodyW + 0.4, 0.9, bodyD + 0.4), Vector3.new(0, bodyCentreY, 0), rarityColour, Enum.PartType.Block, Enum.Material.Neon)
 
 	-- Legs end at local y=-1.5, the belt/pad top, for every cast member.
 	local legX = bodyW / 2 - 0.9
@@ -343,7 +369,7 @@ local function buildModelInner(entry)
 	-- Rarity glow disc under the feet: a flat Neon disc in the rarity
 	-- colour, sitting on the floor (local y -1.5..-1.3), so the
 	-- character reads at dusk from across the street.
-	part("GlowDisc", Vector3.new(0.2, 5, 5), Vector3.new(0, -1.4, 0), rarityColour, Enum.PartType.Cylinder, Enum.Material.Neon, CFrame.Angles(0, 0, math.pi / 2), 0.3)
+	part("GlowDisc", Vector3.new(0.2, 6, 6), Vector3.new(0, -1.4, 0), rarityColour, Enum.PartType.Cylinder, Enum.Material.Neon, CFrame.Angles(0, 0, math.pi / 2), 0.15)
 
 	-- Invisible Root part at the model origin (local y=0) as the
 	-- PrimaryPart: the model pivots on it, so every PivotTo target
@@ -377,15 +403,14 @@ local function buildModelInner(entry)
 	aura.Transparency = NumberSequence.new(0.3, 0.9)
 	aura.Parent = body
 
-	-- Rare glow: Epic+ models carry a small PointLight so they shine
-	-- on the belt. The RarityAura emitter already scales with rank.
-	if rank >= 3 then
-		local glow = Instance.new("PointLight")
-		glow.Color = rarityColour
-		glow.Range = 8
-		glow.Brightness = 1
-		glow.Parent = body
-	end
+	-- Every character carries its own light in its rarity colour, so
+	-- it glows and reads in the dark scene. (Epic+ used to be the
+	-- only ones with a light; Commons and Rares were dark blobs.)
+	local glow = Instance.new("PointLight")
+	glow.Color = rarityColour
+	glow.Range = 10
+	glow.Brightness = 1
+	glow.Parent = body
 
 	-- ProximityPrompt buy (E key); the ClickDetector stays as fallback.
 	local prompt = Instance.new("ProximityPrompt")
@@ -420,7 +445,11 @@ local function buildModelInner(entry)
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "BrainrotLabel"
 	gui.Size = UDim2.fromOffset(110, 40)
-	gui.StudsOffsetWorldSpace = Vector3.new(0, 8.5, 0)
+	-- The label sits just above the head: the gap from the body
+	-- centre to the head top, scaled with the model, plus 2 studs.
+	-- (A fixed 8.5 floated far above short characters and read as a
+	-- label with no character under it.)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, (headTopY - bodyCentreY) * SCALE + 2.0, 0)
 	gui.AlwaysOnTop = false
 	gui.MaxDistance = 40
 	gui.Adornee = body
@@ -450,6 +479,22 @@ local function buildModelInner(entry)
 	click.Name = "BuyClick"
 	click.MaxActivationDistance = 32
 	click.Parent = model
+
+	-- Scale the whole character up so it reads from across the street:
+	-- every part grows by SCALE around the model pivot, then the whole
+	-- model lifts by FEET_LIFT so the feet stay exactly on the floor
+	-- (local y=-1.5, the belt/pad pivot math). The Root (pivot) never
+	-- moves, and non-part children (light, aura, prompt, label) are
+	-- untouched. Ball/Cylinder rules still hold: a uniform scale keeps
+	-- every Ball cubic and every Cylinder Y==Z.
+	local FEET_LIFT = 1.5 * (SCALE - 1)
+	for _, descendant in ipairs(model:GetDescendants()) do
+		if descendant:IsA("BasePart") and descendant.Name ~= "Root" then
+			descendant.Size = descendant.Size * SCALE
+			local pos = descendant.Position
+			descendant.Position = Vector3.new(pos.X * SCALE, pos.Y * SCALE + FEET_LIFT, pos.Z * SCALE)
+		end
+	end
 
 	return model
 end
@@ -526,24 +571,26 @@ end
 
 -- Pre-place visible characters so the game opens with bodies in view
 -- instead of an empty belt: six (one per rarity) on the first
--- player's base pedestals, slots 1-6 of base 1 (back + middle rows,
--- feet exactly on the pad tops, pivot y=2.9 -> feet 1.4), facing +Z
--- out of the stall's open front toward the street; and four on the
--- belt near the spawn (x -14, -6, 8, 14, z +2 on the spawn side, off
--- the walkers' centre line, clear of the rollers at x -22/-2/18 and
--- the chevrons at x 0), feet exactly on the belt (pivot y=2.7 ->
--- feet 1.2), facing +Z toward the spawn. Runs once at server start;
--- WorldBuilder.build() has already run by then (init.server).
+-- player's base pedestals, FRONT row (slots 7-9, closest to the
+-- street) and MIDDLE row (slots 4-6) — never the back row, which the
+-- stall counter and back wall hide — feet exactly on the pad tops,
+-- facing +Z out of the stall's open front toward the street; and four
+-- on the belt near the spawn (x -15, -5, 5, 15, z +2 on the spawn
+-- side, evenly spaced, clear of the rollers and chevrons), feet
+-- exactly on the belt (pivot y=2.7 -> feet 1.2), facing +Z toward the
+-- spawn. Runs once at server start; WorldBuilder.build() has already
+-- run by then (init.server).
 function BrainrotServer.preplaceShowcase()
 	local pedestalCast = {
-		"soggy-toastino", -- Common
-		"captain-noodlebeard", -- Rare
-		"sir-crustacio", -- Epic
-		"turbo-tungtung", -- Legendary
-		"glorpo-ghost-burger", -- Mythic
-		"blobfather", -- Secret
+		{ 7, "blobfather" }, -- Secret, front row
+		{ 8, "glorpo-ghost-burger" }, -- Mythic, front row
+		{ 9, "turbo-tungtung" }, -- Legendary, front row
+		{ 4, "sir-crustacio" }, -- Epic, middle row
+		{ 5, "captain-noodlebeard" }, -- Rare, middle row
+		{ 6, "soggy-toastino" }, -- Common, middle row
 	}
-	for slot, castId in ipairs(pedestalCast) do
+	for _, pair in ipairs(pedestalCast) do
+		local slot, castId = pair[1], pair[2]
 		local entry = showcaseEntry(castId)
 		if entry then
 			placeShowcase(entry, pedestalPivot(1, slot), "1:" .. tostring(slot))
@@ -556,7 +603,7 @@ function BrainrotServer.preplaceShowcase()
 		"madame-flamingatto", -- Epic
 		"baron-vroomvroom", -- Mythic
 	}
-	local beltX = { -14, -6, 8, 14 }
+	local beltX = { -15, -5, 5, 15 }
 	for i, castId in ipairs(beltCast) do
 		local entry = showcaseEntry(castId)
 		if entry then
@@ -995,7 +1042,9 @@ function BrainrotServer.startBeltWalk()
 							end
 							for i, cube in ipairs(cubes) do
 								local angle = t * 1.2 + (i - 1) * (math.pi * 2 / 3)
-								cube.Position = centre + Vector3.new(math.cos(angle) * 3.4, 2 + math.sin(t * 2 + i) * 0.5, math.sin(angle) * 3.4)
+								-- Orbit radius 4.8: the scaled Blobfather body is 7.3 wide,
+								-- so the old 3.4 put the cubes inside the body.
+								cube.Position = centre + Vector3.new(math.cos(angle) * 4.8, 2 + math.sin(t * 2 + i) * 0.5, math.sin(angle) * 4.8)
 							end
 						end
 					end
