@@ -76,7 +76,8 @@ function BrainrotServer.buildModel(entry)
 		headW, headH, headD = 2.4, 2.4, 2.4
 	elseif id == "kerupuk-krak" then
 		bodyShape = Enum.PartType.Ball
-		bodyW, bodyD = 5.2, 5.2
+		-- Ball needs a uniform size; 5.2 keeps the wide cracker read.
+		bodyW, bodyH, bodyD = 5.2, 5.2, 5.2
 	elseif id == "bakso-blast" then
 		bodyShape = Enum.PartType.Ball
 		headShape = Enum.PartType.Ball
@@ -211,7 +212,8 @@ function BrainrotServer.buildModel(entry)
 	-- Extras that make each cast member its own character.
 	if id == "kopi-kura" then
 		-- Turtle shell on the back, darker than the body.
-		part("Shell", Vector3.new(4.9, 3.4, 1.4), Vector3.new(0, bodyCentreY + 0.2, -1.9), Color3.fromRGB(90, 60, 30), Enum.PartType.Ball)
+		-- Flat plate shell on the back (Block: a Ball must be cubic).
+		part("Shell", Vector3.new(4.9, 3.4, 1.4), Vector3.new(0, bodyCentreY + 0.2, -1.9), Color3.fromRGB(90, 60, 30), Enum.PartType.Block)
 	elseif id == "kerupuk-krak" then
 		-- Cracker freckles across the front.
 		part("Crackle", Vector3.new(0.5, 0.5, 0.5), Vector3.new(-1.2, 1.6, 2.0), Color3.fromRGB(190, 150, 90), Enum.PartType.Ball)
@@ -340,7 +342,13 @@ function BrainrotServer.spawnBrainrotOnBelt()
 	local entry = State.newBeltBrainrot(State.wavePhase == "warning")
 	table.insert(State.belt, entry)
 
-	local model = BrainrotServer.buildModel(entry)
+	-- A bad model must never kill the spawner loop: skip that one spawn.
+	local ok, model = pcall(BrainrotServer.buildModel, entry)
+	if not ok then
+		warn("[Brainrot] buildModel failed for " .. tostring(entry.castId) .. ": " .. tostring(model))
+		BrainrotServer.removeBeltBrainrot(entry.uid)
+		return
+	end
 	entry.model = model
 	model:PivotTo(CFrame.new(WorldBuilder.beltPosition(0)))
 	model.Parent = workspace
