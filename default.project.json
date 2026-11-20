@@ -59,11 +59,13 @@
         "$properties": {
           "Anchored": true,
           "Color": [
-            0.38823,
-            0.37254,
-            0.38823
+            0.05,
+            0.15,
+            0.35
           ],
           "Locked": true,
+          "Material": "SmoothPlastic",
+          "TopSurface": "Smooth",
           "Position": [
             0,
             -14,

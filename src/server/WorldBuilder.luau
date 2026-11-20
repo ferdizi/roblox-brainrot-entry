@@ -363,6 +363,126 @@ local function decorateIsland(folder)
 	flatball("Cloud3", Vector3.new(18, 6, 11), Vector3.new(80, 42, -30), cloud, Enum.Material.SmoothPlastic, folder, 0.3)
 	flatball("Cloud4", Vector3.new(15, 5, 10), Vector3.new(30, 50, 80), cloud, Enum.Material.SmoothPlastic, folder, 0.3)
 	flatball("Cloud5", Vector3.new(17, 5, 10), Vector3.new(-40, 44, -100), cloud, Enum.Material.SmoothPlastic, folder, 0.3)
+
+	-- Four more palms at the island corners, inside the grass disc.
+	local leaf2 = Color3.fromRGB(60, 170, 70)
+	local trunk2 = Color3.fromRGB(110, 80, 45)
+	for _, pos in ipairs({
+		Vector3.new(135, 0, 135),
+		Vector3.new(-135, 0, 135),
+		Vector3.new(135, 0, -135),
+		Vector3.new(-135, 0, -135),
+	}) do
+		decor("PalmTrunk", Vector3.new(1.2, 9, 1.2), pos + Vector3.new(0, 5.2, 0), trunk2, Enum.Material.Wood, folder)
+		flatball("PalmLeaf", Vector3.new(6, 1.2, 2.5), pos + Vector3.new(2.5, 9.8, 0), leaf2, Enum.Material.Grass, folder, 0)
+		flatball("PalmLeaf", Vector3.new(6, 1.2, 2.5), pos + Vector3.new(-2.5, 9.8, 0), leaf2, Enum.Material.Grass, folder, 0)
+		flatball("PalmLeaf", Vector3.new(2.5, 1.2, 6), pos + Vector3.new(0, 9.8, 2.5), leaf2, Enum.Material.Grass, folder, 0)
+		flatball("PalmLeaf", Vector3.new(2.5, 1.2, 6), pos + Vector3.new(0, 9.8, -2.5), leaf2, Enum.Material.Grass, folder, 0)
+	end
+	-- Six more rocks on the outer sand ring.
+	local rock2 = Color3.fromRGB(110, 110, 110)
+	ball("IslandRock7", 4, Vector3.new(185, 2.3, 100), rock2, Enum.Material.Rock, folder, 0)
+	ball("IslandRock8", 5, Vector3.new(-185, 2.8, 100), rock2, Enum.Material.Rock, folder, 0)
+	ball("IslandRock9", 4, Vector3.new(185, 2.3, -100), rock2, Enum.Material.Rock, folder, 0)
+	ball("IslandRock10", 3, Vector3.new(-185, 1.8, -100), rock2, Enum.Material.Rock, folder, 0)
+	ball("IslandRock11", 4, Vector3.new(100, 2.3, 185), rock2, Enum.Material.Rock, folder, 0)
+	ball("IslandRock12", 3, Vector3.new(-100, 1.8, 185), rock2, Enum.Material.Rock, folder, 0)
+	-- Six more torches: four more along the belt, two flanking spawn.
+	local flame2 = Color3.fromRGB(255, 140, 30)
+	for _, pos in ipairs({
+		Vector3.new(-60, 0, -8), Vector3.new(-60, 0, 8),
+		Vector3.new(60, 0, -8), Vector3.new(60, 0, 8),
+		Vector3.new(-8, 0, 45), Vector3.new(8, 0, 45),
+	}) do
+		decor("TorchPost", Vector3.new(0.5, 3, 0.5), pos + Vector3.new(0, 2.2, 0), Color3.fromRGB(90, 65, 40), Enum.Material.Wood, folder)
+		ball("TorchFlame", 1.5, pos + Vector3.new(0, 4.3, 0), flame2, Enum.Material.Neon, folder, 0)
+	end
+	-- Beach umbrellas on the sand by the lagoon (outside the water).
+	for _, pos in ipairs({
+		Vector3.new(55, 0, -32), Vector3.new(55, 0, 32),
+		Vector3.new(132, 0, -30), Vector3.new(132, 0, 30),
+	}) do
+		decor("UmbrellaPole", Vector3.new(0.4, 5, 0.4), pos + Vector3.new(0, 3.2, 0), Color3.fromRGB(240, 240, 240), Enum.Material.SmoothPlastic, folder)
+		flatball("UmbrellaTop", Vector3.new(7, 1, 7), pos + Vector3.new(0, 5.9, 0), Color3.fromRGB(255, 90, 90), Enum.Material.SmoothPlastic, folder, 0)
+	end
+	-- Two bright flags flanking the spawn path.
+	decor("SpawnFlagPoleL", Vector3.new(0.4, 6, 0.4), Vector3.new(-12, 3.7, 40), Color3.fromRGB(90, 90, 100), Enum.Material.Metal, folder)
+	decor("SpawnFlagL", Vector3.new(3, 1.8, 0.15), Vector3.new(-12, 5.5, 40), Color3.fromRGB(255, 220, 60), Enum.Material.Neon, folder)
+	decor("SpawnFlagPoleR", Vector3.new(0.4, 6, 0.4), Vector3.new(12, 3.7, 40), Color3.fromRGB(90, 90, 100), Enum.Material.Metal, folder)
+	decor("SpawnFlagR", Vector3.new(3, 1.8, 0.15), Vector3.new(12, 5.5, 40), Color3.fromRGB(60, 220, 220), Enum.Material.Neon, folder)
+end
+
+-- Ground fill: the island surface itself must not read as a flat blank
+-- slab. Darker sand patches, grass tufts, flower clusters, bushes and
+-- stone paths break the surface up, so the ground looks lived-in from
+-- any camera angle. All flat on the grass top (y=0.7), all
+-- CanCollide=false, all placed clear of the belt, bases, volcano,
+-- lagoon, hill, shop and spawn.
+local function decorateGroundFill(folder)
+	-- Darker sand patches scattered on the grass.
+	local sandPatch = Color3.fromRGB(168, 148, 98)
+	local patchSpots = {
+		{ 45, 25, 0.3 }, { -45, 25, 1.1 }, { 45, -25, 2.0 }, { -45, -25, 0.7 },
+		{ 110, 60, 0.9 }, { -110, 60, 2.4 }, { 110, -60, 1.6 }, { -110, -60, 0.2 },
+		{ 20, -45, 2.8 }, { -20, -45, 1.3 }, { 150, 100, 0.5 }, { -150, 100, 2.1 },
+		{ 150, -100, 1.9 }, { -150, -100, 0.8 },
+	}
+	for i, s in ipairs(patchSpots) do
+		decorR("SandPatch" .. tostring(i), Vector3.new(10, 0.15, 8), Vector3.new(s[1], 0.75, s[2]), sandPatch, Enum.Material.Sand, folder, s[3])
+	end
+
+	-- Grass tufts across the whole island, not just the hill.
+	local tuft = Color3.fromRGB(70, 150, 70)
+	local tuftSpots = {
+		{ 30, 18 }, { -30, 18 }, { 30, -18 }, { -30, -18 },
+		{ 55, 30 }, { -55, 30 }, { 55, -30 }, { -55, -30 },
+		{ 15, -30 }, { -15, -30 }, { 15, 35 }, { -15, 35 },
+		{ 100, 45 }, { -100, 45 }, { 100, -45 }, { -100, -45 },
+		{ 140, 120 }, { -140, 120 }, { 140, -120 }, { -140, -120 },
+		{ 170, 20 }, { -170, 20 }, { 170, -20 }, { -170, -20 },
+		{ 80, 60 }, { -80, 60 }, { 80, -60 }, { -80, -60 },
+	}
+	for i, s in ipairs(tuftSpots) do
+		ball("GroundTuft" .. tostring(i), 2, Vector3.new(s[1], 1.2, s[2]), tuft, Enum.Material.Grass, folder, 0)
+	end
+
+	-- Flower clusters: three tiny bright dots each.
+	local flowerCols = {
+		Color3.fromRGB(255, 120, 180),
+		Color3.fromRGB(255, 220, 60),
+		Color3.fromRGB(255, 255, 255),
+		Color3.fromRGB(180, 100, 255),
+	}
+	local flowerSpots = {
+		{ 25, 25 }, { -25, 25 }, { 25, -25 }, { -25, -25 },
+		{ 60, 45 }, { -60, 45 }, { 60, -45 }, { -60, -45 },
+	}
+	for i, s in ipairs(flowerSpots) do
+		local c = flowerCols[((i - 1) % #flowerCols) + 1]
+		ball("Flower" .. tostring(i) .. "a", 0.8, Vector3.new(s[1], 1.0, s[2]), c, Enum.Material.SmoothPlastic, folder, 0)
+		ball("Flower" .. tostring(i) .. "b", 0.8, Vector3.new(s[1] + 1.5, 1.0, s[2] + 1), c, Enum.Material.SmoothPlastic, folder, 0)
+		ball("Flower" .. tostring(i) .. "c", 0.8, Vector3.new(s[1] - 1.2, 1.0, s[2] + 1.4), c, Enum.Material.SmoothPlastic, folder, 0)
+	end
+
+	-- Bushes: bigger green blobs at the island edges and between bases.
+	local bush = Color3.fromRGB(50, 130, 60)
+	local bushSpots = {
+		{ 120, 80, 4 }, { -120, 80, 3.5 }, { 120, -80, 4 }, { -120, -80, 3 },
+		{ 180, 60, 4 }, { -180, 60, 3.5 }, { 180, -60, 3 }, { -180, -60, 4 },
+		{ 90, 130, 3.5 }, { -90, 130, 4 }, { 90, -130, 4 }, { -90, -130, 3.5 },
+	}
+	for i, s in ipairs(bushSpots) do
+		ball("Bush" .. tostring(i), s[3], Vector3.new(s[1], 0.7 + s[3] * 0.4, s[2]), bush, Enum.Material.Grass, folder, 0)
+	end
+
+	-- Stone paths: spawn to the belt, and spawn to the shop.
+	local stone = Color3.fromRGB(190, 180, 160)
+	for _, z in ipairs({ 40, 34, 28, 22, 16, 10 }) do
+		decor("PathStone", Vector3.new(3, 0.2, 2), Vector3.new(0, 0.8, z), stone, Enum.Material.Slate, folder)
+	end
+	for _, z in ipairs({ 56, 60, 64 }) do
+		decor("PathStone", Vector3.new(3, 0.2, 2), Vector3.new(0, 0.8, z), stone, Enum.Material.Slate, folder)
+	end
 end
 
 function WorldBuilder.build()
@@ -375,15 +495,20 @@ function WorldBuilder.build()
 	-- shows: ocean top y=-2, sand top y=0, grass top y=0.7. The island
 	-- is 440 wide so every gameplay part (bases at radius 82, volcano
 	-- to x=-118, lagoon to x=124, hill to z=-114) sits well inside it.
-	part("Island", Vector3.new(440, 4, 440), Vector3.new(0, -2, 0), Color3.fromRGB(194, 178, 128), Enum.Material.Sand, folder)
-	part("IslandGrass", Vector3.new(400, 1, 400), Vector3.new(0, 0.2, 0), Color3.fromRGB(96, 160, 80), Enum.Material.Grass, folder)
+	local island = part("Island", Vector3.new(440, 4, 440), Vector3.new(0, -2, 0), Color3.fromRGB(194, 178, 128), Enum.Material.Sand, folder)
+	island.TopSurface = Enum.SurfaceType.Smooth
+	local islandGrass = part("IslandGrass", Vector3.new(400, 1, 400), Vector3.new(0, 0.2, 0), Color3.fromRGB(96, 160, 80), Enum.Material.Grass, folder)
+	islandGrass.TopSurface = Enum.SurfaceType.Smooth
 
 	-- The ocean: open water around the island, so the island reads as
 	-- a lagoon island instead of a disc on a grey plate. Non-colliding:
 	-- a player who walks off the island drops onto the lowered
 	-- baseplate just under the surface and can walk back up.
 	local ocean = part("Ocean", Vector3.new(512, 2, 512), Vector3.new(0, -3, 0), Color3.fromRGB(30, 120, 200), Enum.Material.Water, folder)
-	ocean.Transparency = 0.25
+	-- Fully opaque: at 25% transparency the grey studded baseplate
+	-- showed straight through and the "ocean" read as grey studs.
+	ocean.Transparency = 0
+	ocean.TopSurface = Enum.SurfaceType.Smooth
 	ocean.CanCollide = false
 
 	-- The lagoon: blue water at the east end of the belt.
@@ -442,6 +567,7 @@ function WorldBuilder.build()
 	decorateHill(folder)
 	decorateShop(folder)
 	decorateIsland(folder)
+	decorateGroundFill(folder)
 
 	return folder
 end
