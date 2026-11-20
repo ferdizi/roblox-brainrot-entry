@@ -1,9 +1,10 @@
 -- BRAINROT BAZAAR: mythic/warning banner, richest leaderboard, wave shake.
 -- A LocalScript: it only paints what the server announces or snapshots.
 -- The mythic banner sits below the wave banner area (y ~160); the
--- RICHEST panel sits on the left edge below the contracts button
--- (y 256..406), clear of the Roblox top-left menu and Ui's contracts
--- button (y 200..244). Screen shake runs only while wavePhase == "wave".
+-- RICHEST panel sits on the left edge below the rarity legend
+-- (y 456..606), clear of the Roblox top-left menu, Ui's contracts
+-- button (y 200..244) and the legend (y 256..446). Screen shake runs
+-- only while wavePhase == "wave".
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -21,6 +22,10 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local gui = Instance.new("ScreenGui")
 gui.Name = "AnnounceGui"
 gui.ResetOnSpawn = false
+-- Below the main HUD's ScreenGui, so an open side panel (upgrades /
+-- Dex / contracts) draws over the RICHEST panel instead of under it.
+-- The banner sits at y=160, clear of every main-HUD element.
+gui.DisplayOrder = -1
 gui.Parent = playerGui
 
 -- Big top-centre banner, below the wave banner area.
@@ -75,10 +80,10 @@ announce.OnClientEvent:Connect(function(data)
 	end
 end)
 
--- RICHEST leaderboard panel, left edge below the contracts button.
+-- RICHEST leaderboard panel, left edge below the rarity legend.
 local panel = Instance.new("Frame")
 panel.Name = "LeadersPanel"
-panel.Position = UDim2.new(0, 12, 0, 256)
+panel.Position = UDim2.new(0, 12, 0, 456)
 panel.Size = UDim2.new(0, 210, 0, 150)
 panel.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
 panel.BackgroundTransparency = 0.25
