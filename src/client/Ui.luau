@@ -1,4 +1,4 @@
--- BRAINROT KRAKATOA: the client HUD.
+-- BRAINROT BAZAAR: the client HUD.
 -- Everything the player reads lives here, over the 3D world and clear
 -- of the top-left corner where Roblox puts its own menu buttons. The
 -- layout is deliberately dense, like the top games: a feature bar
@@ -38,7 +38,7 @@ local function makeButton(parent, name, text, size, position, colour)
 	button.BackgroundColor3 = colour or Color3.fromRGB(60, 120, 200)
 	button.TextColor3 = Color3.fromRGB(255, 255, 255)
 	button.Text = text
-	button.TextSize = 16
+	button.TextSize = 17
 	button.Font = Enum.Font.SourceSansBold
 	button.TextWrapped = true
 	button.Parent = parent
@@ -114,7 +114,7 @@ function Ui.build(playerGui, callbacks)
 	Ui.callbacks = callbacks or {}
 
 	local gui = Instance.new("ScreenGui")
-	gui.Name = "KrakatoaGui"
+	gui.Name = "BrainrotBazaarGui"
 	gui.ResetOnSpawn = false
 	gui.IgnoreGuiInset = false
 	gui.Parent = playerGui
@@ -122,12 +122,12 @@ function Ui.build(playerGui, callbacks)
 
 	-- Feature bar, top centre: what this game is, in one line.
 	-- The counts come from Config, so they stay true if the cast grows.
-	local featureText = "KRAKATOA · " .. tostring(#Config.Cast) .. " BRAINROTS · " .. tostring(countRarities()) .. " RARITIES · " .. tostring(#Config.Mutations) .. " MUTATIONS · STEAL · LOCK · REBIRTH"
+	local featureText = "BRAINROT BAZAAR · " .. tostring(#Config.Cast) .. " BRAINROTS · " .. tostring(countRarities()) .. " RARITIES · " .. tostring(#Config.Mutations) .. " MUTATIONS · STEAL · LOCK · REBIRTH"
 	Ui.featureBar = makeLabel(gui, "FeatureBar", featureText, UDim2.new(0, 600, 0, 30), UDim2.new(0.5, -300, 0, 8), Color3.fromRGB(255, 220, 90), 15)
-	Ui.featureBar.BackgroundColor3 = Color3.fromRGB(120, 30, 30)
+	Ui.featureBar.BackgroundColor3 = Color3.fromRGB(50, 20, 90)
 	Ui.featureBar.BackgroundTransparency = 0.2
 	round(Ui.featureBar, 8)
-	stroke(Ui.featureBar, Color3.fromRGB(255, 210, 60), 2)
+	stroke(Ui.featureBar, Color3.fromRGB(255, 80, 180), 2)
 
 	-- Money panel, top-right, clear of Roblox's top-left menu.
 	-- Four lines now: cash, income, slots, and the rebirth multiplier.
@@ -136,26 +136,26 @@ function Ui.build(playerGui, callbacks)
 	moneyPanel.AnchorPoint = Vector2.new(1, 0)
 	moneyPanel.Position = UDim2.new(1, -12, 0, 12)
 	moneyPanel.Size = UDim2.fromOffset(280, 124)
-	moneyPanel.BackgroundTransparency = 0.25
-	moneyPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
+	moneyPanel.BackgroundTransparency = 0.15
+	moneyPanel.BackgroundColor3 = Color3.fromRGB(16, 12, 30)
 	moneyPanel.Parent = gui
 	round(moneyPanel, 8)
-	stroke(moneyPanel, Color3.fromRGB(255, 210, 60), 2)
-	Ui.moneyLabel = makeLabel(moneyPanel, "Money", "$100", UDim2.new(1, -12, 0, 42), UDim2.new(0, 6, 0, 6), Color3.fromRGB(120, 255, 120), 30)
+	stroke(moneyPanel, Color3.fromRGB(255, 215, 80), 3)
+	Ui.moneyLabel = makeLabel(moneyPanel, "Money", "$100", UDim2.new(1, -12, 0, 42), UDim2.new(0, 6, 0, 6), Color3.fromRGB(255, 215, 80), 34)
 	Ui.moneyLabel.BackgroundTransparency = 1
-	Ui.incomeLabel = makeLabel(moneyPanel, "Income", "+$0/s", UDim2.new(1, -12, 0, 26), UDim2.new(0, 6, 0, 48), Color3.fromRGB(255, 240, 120), 18)
+	Ui.incomeLabel = makeLabel(moneyPanel, "Income", "+$0/s", UDim2.new(1, -12, 0, 26), UDim2.new(0, 6, 0, 48), Color3.fromRGB(80, 230, 255), 18)
 	Ui.incomeLabel.BackgroundTransparency = 1
 	Ui.slotsLabel = makeLabel(moneyPanel, "Slots", "0/4 slots", UDim2.new(1, -12, 0, 20), UDim2.new(0, 6, 0, 74), Color3.fromRGB(255, 255, 255), 15)
 	Ui.slotsLabel.BackgroundTransparency = 1
 	Ui.rebirthLabel = makeLabel(moneyPanel, "Rebirths", "REBIRTH 0 · x1.0", UDim2.new(1, -12, 0, 22), UDim2.new(0, 6, 0, 94), Color3.fromRGB(200, 160, 255), 15)
 	Ui.rebirthLabel.BackgroundTransparency = 1
 
-	-- Tsunami banner, top centre: the countdown the whole game watches.
+	-- Wave banner, top centre: the countdown the whole game watches.
 	-- Bigger than before, and its colour shouts the phase.
-	Ui.waveBanner = makeLabel(gui, "WaveBanner", "Calm seas... for now", UDim2.new(0, 560, 0, 52), UDim2.new(0.5, -280, 0, 44), Color3.fromRGB(160, 220, 255), 20)
+	Ui.waveBanner = makeLabel(gui, "WaveBanner", "Calm seas... for now", UDim2.new(0, 560, 0, 52), UDim2.new(0.5, -280, 0, 44), Color3.fromRGB(255, 255, 255), 22)
 	Ui.waveBanner.BackgroundTransparency = 0.15
 	round(Ui.waveBanner, 8)
-	stroke(Ui.waveBanner, Color3.fromRGB(255, 255, 255), 2)
+	stroke(Ui.waveBanner, Color3.fromRGB(255, 255, 255), 3)
 
 	-- Carrying bar, under the banner: only visible while the player
 	-- carries a stolen brainrot. Big, red, impossible to miss. The
@@ -163,10 +163,10 @@ function Ui.build(playerGui, callbacks)
 	-- brainrot, so the text stays generic.
 	Ui.alertLabel = makeLabel(gui, "Alert", "", UDim2.new(0, 560, 0, 38), UDim2.new(0.5, -280, 0, 102), Color3.fromRGB(255, 255, 255), 20)
 	Ui.alertLabel.BackgroundTransparency = 0.1
-	Ui.alertLabel.BackgroundColor3 = Color3.fromRGB(200, 60, 40)
+	Ui.alertLabel.BackgroundColor3 = Color3.fromRGB(225, 25, 95)
 	Ui.alertLabel.Visible = false
 	round(Ui.alertLabel, 8)
-	stroke(Ui.alertLabel, Color3.fromRGB(255, 220, 60), 2)
+	stroke(Ui.alertLabel, Color3.fromRGB(255, 215, 80), 3)
 
 	-- Belt list, right edge: what is walking, what it pays, what it costs.
 	local beltPanel = Instance.new("Frame")
@@ -179,7 +179,7 @@ function Ui.build(playerGui, callbacks)
 	beltPanel.Parent = gui
 	round(beltPanel, 8)
 	stroke(beltPanel, Color3.fromRGB(255, 210, 60), 2)
-	local beltTitle = makeLabel(beltPanel, "Title", "ON THE BELT - click to buy", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 240, 120), 16)
+	local beltTitle = makeLabel(beltPanel, "Title", "ON THE BELT — tap a row or hold E near one", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 240, 120), 16)
 	beltTitle.BackgroundTransparency = 1
 	Ui.beltList = Instance.new("Frame")
 	Ui.beltList.Name = "List"
@@ -217,13 +217,62 @@ function Ui.build(playerGui, callbacks)
 	bar.Size = UDim2.new(0, 720, 0, 56)
 	bar.BackgroundTransparency = 1
 	bar.Parent = gui
-	Ui.lockButton = makeButton(bar, "Lock", "LOCK BASE (L)", UDim2.new(0, 130, 1, 0), UDim2.new(0, 0, 0, 0), Color3.fromRGB(200, 60, 60))
-	Ui.slapButton = makeButton(bar, "Slap", "SLAP (F)", UDim2.new(0, 110, 1, 0), UDim2.new(0, 135, 0, 0), Color3.fromRGB(220, 130, 40))
-	Ui.rebirthButton = makeButton(bar, "Rebirth", "REBIRTH (R)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 250, 0, 0), Color3.fromRGB(150, 60, 200))
-	Ui.upgradeButton = makeButton(bar, "Upgrades", "UPGRADES (U)", UDim2.new(0, 160, 1, 0), UDim2.new(0, 405, 0, 0), Color3.fromRGB(60, 120, 200))
-	Ui.dexButton = makeButton(bar, "Dex", "DEX (B)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 570, 0, 0), Color3.fromRGB(60, 180, 120))
+	Ui.lockButton = makeButton(bar, "Lock", "LOCK BASE (L)", UDim2.new(0, 130, 1, 0), UDim2.new(0, 0, 0, 0), Color3.fromRGB(235, 40, 90))
+	Ui.slapButton = makeButton(bar, "Slap", "SLAP (F)", UDim2.new(0, 110, 1, 0), UDim2.new(0, 135, 0, 0), Color3.fromRGB(255, 140, 30))
+	Ui.rebirthButton = makeButton(bar, "Rebirth", "REBIRTH (R)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 250, 0, 0), Color3.fromRGB(170, 60, 255))
+	Ui.upgradeButton = makeButton(bar, "Upgrades", "UPGRADES (U)", UDim2.new(0, 160, 1, 0), UDim2.new(0, 405, 0, 0), Color3.fromRGB(40, 170, 255))
+	Ui.dexButton = makeButton(bar, "Dex", "DEX (B)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 570, 0, 0), Color3.fromRGB(40, 220, 120))
+	stroke(Ui.lockButton, Color3.fromRGB(255, 120, 160), 2)
+	stroke(Ui.slapButton, Color3.fromRGB(255, 190, 90), 2)
+	stroke(Ui.rebirthButton, Color3.fromRGB(200, 140, 255), 2)
+	stroke(Ui.upgradeButton, Color3.fromRGB(120, 220, 255), 2)
+	stroke(Ui.dexButton, Color3.fromRGB(120, 255, 170), 2)
 	-- Contract button lives on the left edge, above the Dex panel.
-	Ui.contractButton = makeButton(gui, "Contracts", "CONTRACTS (C)", UDim2.new(0, 150, 0, 44), UDim2.new(0, 12, 0, 200), Color3.fromRGB(60, 180, 120))
+	Ui.contractButton = makeButton(gui, "Contracts", "CONTRACTS (C)", UDim2.new(0, 150, 0, 44), UDim2.new(0, 12, 0, 200), Color3.fromRGB(40, 220, 120))
+
+	-- Rarity legend, left edge below the Contracts button (y=256):
+	-- the six rarities with their $/s ranges, built from Config.Cast
+	-- so the numbers stay true if the cast changes.
+	local legendPanel = Instance.new("Frame")
+	legendPanel.Name = "LegendPanel"
+	legendPanel.Position = UDim2.new(0, 12, 0, 256)
+	legendPanel.Size = UDim2.new(0, 210, 0, 190)
+	legendPanel.BackgroundTransparency = 0.25
+	legendPanel.BackgroundColor3 = Color3.fromRGB(16, 12, 30)
+	legendPanel.Parent = gui
+	round(legendPanel, 8)
+	stroke(legendPanel, Color3.fromRGB(255, 80, 180), 2)
+	local legendTitle = makeLabel(legendPanel, "Title", "RARITY LEGEND", UDim2.new(1, 0, 0, 28), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 240, 120), 18)
+	legendTitle.BackgroundTransparency = 1
+	local rarityOrder = { "Common", "Rare", "Epic", "Legendary", "Mythic", "Secret" }
+	Ui.legendRows = {}
+	for i, rarity in ipairs(rarityOrder) do
+		local minRate, maxRate
+		for _, entry in ipairs(Config.Cast) do
+			if entry.rarity == rarity then
+				if not minRate or entry.rate < minRate then
+					minRate = entry.rate
+				end
+				if not maxRate or entry.rate > maxRate then
+					maxRate = entry.rate
+				end
+			end
+		end
+		local rangeText
+		if minRate and maxRate then
+			if minRate == maxRate then
+				rangeText = Config.formatMoney(minRate) .. "/s"
+			else
+				rangeText = Config.formatMoney(minRate) .. "–" .. Config.formatMoney(maxRate) .. "/s"
+			end
+		else
+			rangeText = "?/s"
+		end
+		local row = makeLabel(legendPanel, "Legend_" .. rarity, rarity .. "  " .. rangeText, UDim2.new(1, -12, 0, 26), UDim2.new(0, 6, 0, 30 + (i - 1) * 26), Config.RarityColour[rarity] or Color3.fromRGB(255, 255, 255), 15)
+		row.TextXAlignment = Enum.TextXAlignment.Left
+		row.BackgroundTransparency = 1
+		Ui.legendRows[rarity] = row
+	end
 
 	Ui.lockButton.MouseButton1Click:Connect(function()
 		if Ui.callbacks.lock then
@@ -272,13 +321,13 @@ function Ui.togglePanel(name)
 	Ui.currentPanel = name
 end
 
--- Upgrades panel: four upgrades, each with its next cost on the button.
+-- Upgrades panel: five upgrades, each with its next cost on the button.
 function Ui.buildUpgradesPanel(gui)
 	local panel = Instance.new("Frame")
 	panel.Name = "UpgradesPanel"
 	panel.AnchorPoint = Vector2.new(0, 1)
 	panel.Position = UDim2.new(0, 12, 1, -76)
-	panel.Size = UDim2.new(0, 300, 0, 300)
+	panel.Size = UDim2.new(0, 300, 0, 330)
 	panel.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
 	panel.BackgroundTransparency = 0.15
 	panel.Visible = false
@@ -288,7 +337,7 @@ function Ui.buildUpgradesPanel(gui)
 	Ui.upgradesTitle = makeLabel(panel, "Title", "UPGRADES", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 240, 120), 18)
 	Ui.upgradesTitle.BackgroundTransparency = 1
 	Ui.upgradeRows = {}
-	local order = { "slot", "speed", "slap", "lock" }
+	local order = { "slot", "speed", "slap", "lock", "beltSpeed" }
 	for i, kind in ipairs(order) do
 		local def = Config.Upgrades[kind]
 		local row = makeButton(panel, "Upgrade_" .. kind, def.name, UDim2.new(1, -12, 0, 52), UDim2.new(0, 6, 0, 34 + (i - 1) * 58), Color3.fromRGB(60, 120, 200))
@@ -376,14 +425,14 @@ function Ui.update(snapshot)
 	-- The wave banner: calm, warning, or wave, with its countdown.
 	-- Warning and wave are two lines, so the danger is impossible to miss.
 	if snapshot.wavePhase == "warning" then
-		Ui.waveBanner.Text = "TSUNAMI IN " .. tostring(snapshot.waveCountdown) .. "s!\nRUN TO YOUR BASE OR THE SAFE HILL!"
-		Ui.waveBanner.BackgroundColor3 = Color3.fromRGB(200, 60, 40)
+		Ui.waveBanner.Text = "BRAINROT WAVE IN " .. tostring(snapshot.waveCountdown) .. "s!\nRUN TO YOUR BASE OR THE SAFE PLAZA!"
+		Ui.waveBanner.BackgroundColor3 = Color3.fromRGB(220, 30, 110)
 	elseif snapshot.wavePhase == "wave" then
-		Ui.waveBanner.Text = "TSUNAMI!\nHOLD ON - STAY ON HIGH GROUND!"
-		Ui.waveBanner.BackgroundColor3 = Color3.fromRGB(40, 100, 220)
+		Ui.waveBanner.Text = "BRAINROT WAVE!\nHOLD ON - STAY ON HIGH GROUND!"
+		Ui.waveBanner.BackgroundColor3 = Color3.fromRGB(75, 45, 210)
 	else
-		Ui.waveBanner.Text = "Next tsunami in " .. tostring(snapshot.waveCountdown) .. "s"
-		Ui.waveBanner.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
+		Ui.waveBanner.Text = "Next wave in " .. tostring(snapshot.waveCountdown) .. "s"
+		Ui.waveBanner.BackgroundColor3 = Color3.fromRGB(30, 18, 55)
 	end
 
 	-- Belt list: up to eight rows, name, rarity, mutation, rate, cost.

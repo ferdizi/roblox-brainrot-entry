@@ -7,6 +7,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local State = require(script.Parent:WaitForChild("State"))
@@ -14,6 +15,22 @@ local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
 
 local BrainrotServer = {}
 BrainrotServer.remotes = nil
+
+-- Models currently mid-walk (walkModelTo): the idle loop skips these.
+local walking = {}
+-- Owned models' rest CFrame (pedestal), so the idle loop never drifts.
+local idleBase = {}
+
+-- Play a SoundService sound by name; a sound that fails to load must
+-- never error the spawner, so the Play is pcall-guarded.
+local function playSound(name)
+	pcall(function()
+		local sound = SoundService:FindFirstChild(name)
+		if sound then
+			sound:Play()
+		end
+	end)
+end
 
 -- Build the 3D model for one brainrot: a distinct character per cast
 -- member of "Brainrot Bazaar" (toaster, pigeon, noodle pirate, cone,
@@ -329,6 +346,26 @@ function BrainrotServer.buildModel(entry)
 	aura.Transparency = NumberSequence.new(0.3, 0.9)
 	aura.Parent = body
 
+	-- Rare glow: Epic+ models carry a small PointLight so they shine
+	-- on the belt. The RarityAura emitter already scales with rank.
+	if rank >= 3 then
+		local glow = Instance.new("PointLight")
+		glow.Color = rarityColour
+		glow.Range = 8
+		glow.Brightness = 1
+		glow.Parent = body
+	end
+
+	-- ProximityPrompt buy (E key); the ClickDetector stays as fallback.
+	local prompt = Instance.new("ProximityPrompt")
+	prompt.Name = "BuyPrompt"
+	prompt.ActionText = "Buy"
+	prompt.ObjectText = entry.name
+	prompt.HoldDuration = 0.5
+	prompt.MaxActivationDistance = 14
+	prompt.KeyboardKeyCode = Enum.KeyCode.E
+	prompt.Parent = body
+
 	-- Glitch mutation: a flickering Neon spark on the model, and the
 	-- aura tinted glitch-purple. The colour cycling itself is done by
 	-- the walk loop (a systems phase), which owns the flicker.
@@ -382,26 +419,36 @@ end
 
 -- Walk a model from where it is to a target position, in small steps,
 -- so a bought brainrot visibly waddles home instead of teleporting.
+-- The walking set marks it mid-walk (the idle loop skips it); the
+-- pcall guarantees a failure never leaves it stuck in the set.
 function BrainrotServer.walkModelTo(model, target)
 	local primary = model.PrimaryPart
 	if not primary then
 		return
 	end
-	local start = primary.Position
-	local distance = (target - start).Magnitude
-	local steps = math.max(1, math.floor(distance / 1.5))
-	for i = 1, steps do
-		if not model.Parent then
-			return
+	walking[model] = true
+	idleBase[model] = nil
+	pcall(function()
+		local start = primary.Position
+		local distance = (target - start).Magnitude
+		local steps = math.max(1, math.floor(distance / 1.5))
+		for i = 1, steps do
+			if not model.Parent then
+				return
+			end
+			local alpha = i / steps
+			local pos = start:Lerp(target, alpha)
+			local bob = math.sin(alpha * math.pi * 6) * 0.15
+			model:PivotTo(CFrame.new(pos + Vector3.new(0, bob, 0)))
+			task.wait(0.05)
 		end
-		local alpha = i / steps
-		local pos = start:Lerp(target, alpha)
-		local bob = math.sin(alpha * math.pi * 6) * 0.15
-		model:PivotTo(CFrame.new(pos + Vector3.new(0, bob, 0)))
-		task.wait(0.05)
-	end
+		if model.Parent then
+			model:PivotTo(CFrame.new(target))
+		end
+	end)
+	walking[model] = nil
 	if model.Parent then
-		model:PivotTo(CFrame.new(target))
+		idleBase[model] = CFrame.new(target)
 	end
 end
 
@@ -414,6 +461,19 @@ function BrainrotServer.spawnBrainrotOnBelt()
 	end
 	local entry = State.newBeltBrainrot(State.wavePhase == "warning")
 	table.insert(State.belt, entry)
+
+	-- Mythic/Secret spawn: announce to every client + play the sound.
+	if entry.rarity == "Mythic" or entry.rarity == "Secret" then
+		if BrainrotServer.remotes and BrainrotServer.remotes.Announce then
+			BrainrotServer.remotes.Announce:FireAllClients({
+				type = "mythic",
+				name = entry.name,
+				rarity = entry.rarity,
+				rate = entry.rate * entry.mutationMult,
+			})
+		end
+		playSound("MythicSound")
+	end
 
 	-- A bad model must never kill the spawner loop: skip that one spawn.
 	local ok, model = pcall(BrainrotServer.buildModel, entry)
@@ -440,6 +500,19 @@ function BrainrotServer.spawnBrainrotOnBelt()
 			end
 			if BrainrotServer.onBaseClick then
 				BrainrotServer.onBaseClick(player, entry.model)
+			end
+		end)
+	end
+
+	-- ProximityPrompt buy (E key): the same buy as the ClickDetector.
+	local prompt = model:FindFirstChild("BuyPrompt", true)
+	if prompt then
+		prompt.Triggered:Connect(function(player)
+			for _, candidate in ipairs(State.belt) do
+				if candidate.uid == entry.uid then
+					BrainrotServer.buyBrainrot(player, entry.uid)
+					return
+				end
 			end
 		end)
 	end
@@ -500,6 +573,14 @@ function BrainrotServer.buyBrainrot(player, uid)
 		end
 	end
 
+	-- Kill the buy prompt: an owned brainrot can't be "bought" again.
+	if entry.model then
+		local prompt = entry.model:FindFirstChild("BuyPrompt", true)
+		if prompt then
+			prompt:Destroy()
+		end
+	end
+
 	data.money -= entry.cost
 	data.boughtCount += 1
 	data.contracts.buy3 += 1
@@ -547,6 +628,9 @@ function BrainrotServer.checkContracts(player)
 end
 
 -- One second of income for every player, plus contract progress on it.
+-- Floating "+$" popups ride above owned brainrots (capped at 6 per
+-- player per tick); each popup animates on its own task.spawn, so the
+-- income loop itself never yields.
 function BrainrotServer.collectIncome()
 	for player, data in pairs(State.players) do
 		local income = State.incomePerSecond(data)
@@ -555,6 +639,44 @@ function BrainrotServer.collectIncome()
 			data.earnedTotal += income
 			data.contracts.earn1000 = data.earnedTotal
 			BrainrotServer.checkContracts(player)
+			local shown = 0
+			for _, owned in pairs(data.brainrots) do
+				if shown >= 6 then
+					break
+				end
+				local model = owned.model
+				if model and model.Parent then
+					shown += 1
+					local per = Config.incomePerSecond(owned, data.rebirths)
+					task.spawn(function()
+						pcall(function()
+							local gui = Instance.new("BillboardGui")
+							gui.Name = "IncomePopup"
+							gui.Size = UDim2.fromOffset(80, 28)
+							gui.StudsOffsetWorldSpace = Vector3.new(0, 9.5, 0)
+							gui.AlwaysOnTop = true
+							gui.Parent = model
+							local label = Instance.new("TextLabel")
+							label.Size = UDim2.fromScale(1, 1)
+							label.BackgroundTransparency = 1
+							label.Text = "+$" .. tostring(per)
+							label.TextColor3 = Color3.fromRGB(120, 255, 120)
+							label.TextScaled = true
+							label.Font = Enum.Font.SourceSansBold
+							label.Parent = gui
+							for _ = 1, 20 do
+								task.wait(0.05)
+								if not gui.Parent then
+									return
+								end
+								gui.StudsOffsetWorldSpace += Vector3.new(0, 0.1, 0)
+								label.TextTransparency += 0.05
+							end
+							gui:Destroy()
+						end)
+					end)
+				end
+			end
 		end
 	end
 end
@@ -603,6 +725,9 @@ function BrainrotServer.buyUpgrade(player, kind)
 	end
 	data.money -= cost
 	data.upgrades[kind] += 1
+	if kind == "beltSpeed" then
+		State.beltSpeedBonus = (State.beltSpeedBonus or 0) + Config.Upgrades.beltSpeed.speedPerLevel
+	end
 	return true
 end
 
@@ -626,20 +751,92 @@ function BrainrotServer.startSpawner()
 	end)
 end
 
--- The belt walk loop: every live brainrot shuffles towards the lagoon.
+-- The belt walk loop: every live brainrot shuffles towards the lagoon,
+-- with its IdleType ("bob" | "bounce" | "spin") composed onto the belt
+-- position. A second Heartbeat animates owned pedestal models in place
+-- (Glitch flicker + Blobfather cube orbit included); it skips models
+-- mid-walk and carried models (unanchored), and never yields.
 function BrainrotServer.startBeltWalk()
+	-- Returns (yOffset, yaw) for an idle type at time t.
+	local function idleOffset(idleType, t)
+		if idleType == "bounce" then
+			return math.abs(math.sin(t * 4)) * 0.5, 0
+		elseif idleType == "spin" then
+			return 0, t * 1.5
+		else -- "bob"
+			return math.sin(t * 2) * 0.15, 0
+		end
+	end
+	local function idleTypeOf(model)
+		local value = model:FindFirstChild("IdleType")
+		return value and value.Value or "bob"
+	end
+
 	RunService.Heartbeat:Connect(function(dt)
+		local beltSpeed = Config.Belt.walkSpeed + (State.beltSpeedBonus or 0)
+		local t = os.clock()
 		local toRemove = {}
 		for _, entry in ipairs(State.belt) do
-			entry.progress += Config.Belt.walkSpeed * dt
+			entry.progress += beltSpeed * dt
 			if entry.progress >= Config.Belt.length then
 				table.insert(toRemove, entry.uid)
 			elseif entry.model and entry.model.Parent then
-				entry.model:PivotTo(CFrame.new(WorldBuilder.beltPosition(entry.progress)))
+				local base = WorldBuilder.beltPosition(entry.progress)
+				local yOff, yaw = idleOffset(idleTypeOf(entry.model), t)
+				entry.model:PivotTo(CFrame.new(base + Vector3.new(0, yOff, 0)) * CFrame.Angles(0, yaw, 0))
 			end
 		end
 		for _, uid in ipairs(toRemove) do
 			BrainrotServer.removeBeltBrainrot(uid)
+		end
+	end)
+
+	RunService.Heartbeat:Connect(function(_dt)
+		local t = os.clock()
+		local glitchHues = {
+			Color3.fromRGB(160, 100, 255),
+			Color3.fromRGB(80, 230, 255),
+			Color3.fromRGB(255, 120, 220),
+		}
+		for _, data in pairs(State.players) do
+			for _, owned in pairs(data.brainrots) do
+				local model = owned.model
+				if model and model.Parent and not walking[model] then
+					local primary = model.PrimaryPart
+					if primary and primary.Anchored then
+						local base = idleBase[model]
+						if not base then
+							base = model:GetPivot()
+							idleBase[model] = base
+						end
+						local yOff, yaw = idleOffset(idleTypeOf(model), t)
+						model:PivotTo(CFrame.new(base.Position + Vector3.new(0, yOff, 0)) * CFrame.Angles(0, yaw, 0))
+						-- Glitch mutation: cycle the body colour every ~0.25s.
+						if owned.mutation == "Glitch" then
+							local body = model:FindFirstChild("Body")
+							if body then
+								body.Color = glitchHues[math.floor(t / 0.25) % 3 + 1]
+							end
+						end
+						-- Blobfather: rotate its 3 GlitchCubes around the centre.
+						if owned.castId == "blobfather" then
+							local centre = model:GetPivot().Position
+							local cubes = {}
+							for _, descendant in ipairs(model:GetDescendants()) do
+								if descendant.Name == "GlitchCube" then
+									table.insert(cubes, descendant)
+								end
+							end
+							for i, cube in ipairs(cubes) do
+								local angle = t * 1.2 + (i - 1) * (math.pi * 2 / 3)
+								cube.Position = centre + Vector3.new(math.cos(angle) * 3.4, 2 + math.sin(t * 2 + i) * 0.5, math.sin(angle) * 3.4)
+							end
+						end
+					end
+				elseif model and not model.Parent then
+					idleBase[model] = nil
+				end
+			end
 		end
 	end)
 end

@@ -6,6 +6,7 @@
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local State = require(script:WaitForChild("State"))
@@ -33,6 +34,7 @@ local remoteNames = {
 	"Rebirth",
 	"BuyUpgrade",
 	"StateSync",
+	"Announce",
 }
 local remotes = {}
 for _, name in ipairs(remoteNames) do
@@ -41,6 +43,19 @@ for _, name in ipairs(remoteNames) do
 	remote.Parent = remotesFolder
 	remotes[name] = remote
 end
+
+-- Server sounds: the mythic-spawn sting and the tsunami siren, both
+-- played from the server modules via a pcall-guarded Play.
+local function makeSound(name)
+	local sound = Instance.new("Sound")
+	sound.Name = name
+	sound.SoundId = "rbxassetid://9120386436"
+	sound.Volume = 0.5
+	sound.Parent = SoundService
+	return sound
+end
+makeSound("MythicSound")
+makeSound("SirenSound")
 
 -- Clicking a brainrot that lives on a base is a steal attempt, not a
 -- buy. The belt module does not know about stealing, so the bootstrap

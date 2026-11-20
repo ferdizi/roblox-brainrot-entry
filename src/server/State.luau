@@ -22,12 +22,15 @@ State.nextUid = 1
 State.wavePhase = "calm"
 State.waveCountdown = Config.Wave.calmSeconds
 
+-- Server-wide belt-speed bonus from beltSpeed upgrades (all players).
+State.beltSpeedBonus = 0
+
 function State.newPlayerState(baseIndex)
 	return {
 		money = Config.Belt.startMoney,
 		earnedTotal = 0,
 		rebirths = 0,
-		upgrades = { slot = 0, speed = 0, slap = 0, lock = 0 },
+		upgrades = { slot = 0, speed = 0, slap = 0, lock = 0, beltSpeed = 0 },
 		brainrots = {}, -- slot index -> owned brainrot table
 		dex = {}, -- cast id -> true, once ever owned
 		contracts = { buy3 = 0, earn1000 = 0, survive2 = 0 },
@@ -183,7 +186,19 @@ function State.snapshotFor(player)
 	table.sort(belt, function(a, b)
 		return a.uid < b.uid
 	end)
+	-- Richest players, top 5 by money (cheap: few players, one sort).
+	local leaders = {}
+	for other, otherData in pairs(State.players) do
+		table.insert(leaders, { name = other.Name, money = math.floor(otherData.money) })
+	end
+	table.sort(leaders, function(a, b)
+		return a.money > b.money
+	end)
+	while #leaders > 5 do
+		table.remove(leaders)
+	end
 	return {
+		leaders = leaders,
 		money = math.floor(data.money),
 		income = State.incomePerSecond(data),
 		rebirths = data.rebirths,
