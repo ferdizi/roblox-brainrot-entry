@@ -1,11 +1,13 @@
--- BRAINROT BAZAAR: client bootstrap.
+-- BRAINROT BAZAAR v2: client bootstrap.
 -- One LocalScript starts the client: it waits for the server's
 -- RemoteEvents, builds the HUD, binds the keys, and then does nothing
 -- but paint the snapshots the server sends once a second. The client
--- never decides money, ownership or locks; it only asks, and the
--- server answers. Clicking a brainrot on the belt buys it, clicking
--- one on someone else's base tries to steal it - both through the
--- ClickDetectors the server put on the models.
+-- never decides money, ownership or rebirths; it only asks, and the
+-- server answers. Clicking a brainrot on the belt buys it, through
+-- the ClickDetectors the server put on the models. v2: no lock, no
+-- slap, no stealing. The camera is the DEFAULT Roblox camera — the
+-- spawn faces the belt, so the first view is already the good one,
+-- and zoom + orbit keep working.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,18 +22,10 @@ local Input = require(script.Parent:WaitForChild("Input"))
 local remotes = ReplicatedStorage:WaitForChild("BazaarRemotes")
 local stateSync = remotes:WaitForChild("StateSync")
 local buyBrainrot = remotes:WaitForChild("BuyBrainrot")
-local lockBase = remotes:WaitForChild("LockBase")
-local slap = remotes:WaitForChild("Slap")
 local rebirth = remotes:WaitForChild("Rebirth")
 local buyUpgrade = remotes:WaitForChild("BuyUpgrade")
 
 local callbacks = {
-	lock = function()
-		lockBase:FireServer()
-	end,
-	slap = function()
-		slap:FireServer()
-	end,
 	rebirth = function()
 		rebirth:FireServer()
 	end,
@@ -48,8 +42,6 @@ local callbacks = {
 Ui.build(playerGui, callbacks)
 
 Input.bindGameKeys({
-	lock = callbacks.lock,
-	slap = callbacks.slap,
 	rebirth = callbacks.rebirth,
 	toggleUpgrades = function()
 		Ui.togglePanel("upgrades")
@@ -62,9 +54,9 @@ Input.bindGameKeys({
 	end,
 })
 
--- Every snapshot repaints the HUD: money, belt, wave, Dex, contracts.
+-- Every snapshot repaints the HUD: money, belt, wave, Dex, quests.
 stateSync.OnClientEvent:Connect(function(snapshot)
 	Ui.update(snapshot)
 end)
 
-print("BRAINROT BAZAAR client ready. Buy brainrots, lock your base, outrun the wave.")
+print("BRAINROT BAZAAR v2 client ready. Buy brainrots, outrun the wave.")

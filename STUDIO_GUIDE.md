@@ -1,63 +1,45 @@
-# STUDIO_GUIDE.md — Publish Brainrot Bazaar (for Gadiel, on Windows/Mac)
+# STUDIO_GUIDE.md — Play-test + screenshots for Brainrot Bazaar v2 (for Gadiel)
 
 You are the only one who can do these steps: they need Roblox Studio on your
-computer and your Roblox account. Do them in order. Deadline: Fri 20 Nov 2026,
-21:30 WIB.
+computer and your Roblox account. The place is ALREADY published as Public
+**Brainrot Bazaar** (place_id 131988583337739, universe_id 10777954476, play code
+already in the description). Do them in order. Deadline: Fri 20 Nov 2026,
+21:30 WIB — screenshots + submit reserve the last 40 minutes (from 20:50 WIB).
 
 ## 0. What you need
 
-- Roblox Studio installed (https://create.roblox.com) and signed in to a Roblox
-  account that is at least 2 days old and past its age check.
-- This repository cloned on your computer (`git clone https://github.com/ferdizi/roblox-brainrot-entry`).
+- Roblox Studio installed (https://create.roblox.com) and signed in as **gmbuyyy**.
+- This repository cloned on your computer (`git clone https://github.com/ferdizi/roblox-brainrot-entry`)
+  — or download the latest `game.rbxl` from the repo page.
 - The `game.rbxl` in this repo is already built with Rojo from the Luau source.
   Open that file — do NOT rebuild it with Rojo on your machine unless you change `src/`.
 
-## 1. Open and play-test
+## 1. Open and play-test (v2 — the rebuild)
 
 1. Open Roblox Studio → open `game.rbxl` from the cloned repo.
-2. Press **Play** (F5). You should spawn on a neon night-market street: a conveyor
-   belt running down the middle, 6 market-stall bases (3 north, 3 south) with neon
-   signs and glowing pedestals, a "BRAINROT BAZAAR" arch, string lights, a safe
-   plaza to the north, and brainrots walking the belt within a few seconds,
-   standing on it — not sunk into it. Each one bobs, bounces or spins, with a
-   name tag and "$/s" label in its rarity colour.
+2. Press **Play** (F5). You should spawn on a BRIGHT neon night-market street: a
+   golden conveyor belt running down the middle, 6 bright market-stall bases
+   (3 north, 3 south) with neon signs and glowing pedestals, a "BRAINROT BAZAAR"
+   arch, string lights, a cyan safe plaza to the north with a giant glowing
+   Pocongo Disco-Ninja statue, and brainrots walking the belt within a few
+   seconds — BIG, BRIGHT bodies standing on it, not sunk into it. Each one bobs,
+   bounces or spins, with a name tag and "$/s" label in its rarity colour.
+   **Check zoom: scroll the mouse wheel — the camera must zoom in/out, and
+   right-drag must orbit. If it doesn't, tell the agent immediately.**
 3. Walk up to a brainrot on the belt and hold **E** to buy it (or click it, or tap
    its row in the belt list on the right) — it should waddle to a pedestal on your
    base, your money should start ticking up in the top-right HUD, and a floating
-   "+$" popup should appear above it every second. The Upgrades panel (U) now
-   shows each upgrade's next price (including Faster Conveyor), and the LOCK button
-   shows locked / cooldown seconds. The left edge shows the RARITY LEGEND and the
-   RICHEST leaderboard.
+   "+$" popup should appear above it every second. The Upgrades panel (U) shows
+   each upgrade's next price. The left edge shows the RARITY LEGEND and the
+   RICHEST leaderboard. A "HOW TO PLAY" box appears at spawn — click GOT IT.
 4. Watch the top-centre banner: a Brainrot Wave warning comes about every 90 seconds
    (10s, siren + countdown). Then a giant hot-pink goo wall sweeps the street and the
    camera shakes. (TOUR.json can jump straight to a warning for the 3-wave.png shot,
    via `WaveServer.skipToWarning` — reviewers only, it changes no money.)
 5. Press **Stop** when you are happy it runs. If anything errors, check the Output
-   window and tell the agent the exact error line.
+   window and tell the agent the exact error line. **Zero errors is the goal.**
 
-## 2. Publish as a NEW Public experience
-
-1. In Studio: **File → Publish to Roblox As…** → **Create new experience**.
-2. Name it **Brainrot Bazaar**. (Do not reuse the Coin Rush place.)
-3. Fill in a description and a genre when Roblox asks. **Important:** put your
-   make.fun play code in the description. Get it with this command (from the kit
-   folder, after signing in — the agent will run it for you at submit time):
-   `node cli/makefun.mjs check --repo <your repository> --play-code 0`
-   The code looks like `makefun-xxx-yyy-zzz`. Paste it as it stands. If Roblox
-   refuses a description containing it, try play-code 1, 2 or 3 instead.
-4. Answer Roblox's content questions (one question about age-restricted content
-   — answer No — or the short questionnaire).
-5. On the Creator Dashboard (https://create.roblox.com/dashboard/creations),
-   open the experience → set it to **Public**. (It may show as Playtest/Private
-   until the description, genre and questions are done.)
-6. Find the two IDs:
-   - **place_id**: the number in the play link `https://www.roblox.com/games/<place_id>/...`
-   - **universe_id**: the number after `experiences/` in the experience's address
-     on the Creator Dashboard (or `game.GameId` in Studio — NOT `game.PlaceId`).
-7. Edit `PLAY.json` in the repo to:
-   `{"url": "https://www.roblox.com/games/<place_id>/Brainrot-Bazaar", "place_id": <place_id>, "universe_id": <universe_id>}`
-
-## 3. Take the 4 screenshots (in Studio, game running)
+## 2. Take the 4 screenshots (in Studio, game running)
 
 Each must be 16:9 (1280x720 is ideal), each under 256 KiB (re-encode as JPEG or
 scale down if a capture is bigger), short side at least 480 px. Keep HUD text
@@ -65,39 +47,38 @@ clear of the top-left corner (Roblox's own menu buttons sit there). Take each
 shot while the game is running — if Studio loses focus the game can pause, so
 use Studio's own screenshot (or the OS capture) while the play test is live.
 
-1. **1-start.png** (the cover = your thumbnail): spawn view — neon night-market
-   street, belt with brainrots walking, arch and neon signs behind. Wide shot,
-   brainrot labels readable.
-2. **2-play.png**: mid-game — a bought brainrot on a pedestal on your base, money
+1. **1-start.jpg** (the cover = your thumbnail): spawn view — bright night-market
+   street, golden belt with brainrots walking, arch and neon signs behind. Wide shot,
+   brainrot bodies + labels readable.
+2. **2-play.jpg**: mid-game — a bought brainrot on a pedestal on your base, money
    ticking in the HUD, "+$" popup visible, belt list on the right.
-3. **3-wave.png**: during a Brainrot Wave warning/wave — red banner, hot-pink goo
+3. **3-wave.jpg**: during a Brainrot Wave warning/wave — red banner, hot-pink goo
    wall sweeping the street.
-4. **4-win.png**: late game — several brainrots of different rarities on the base,
-   a rare/mythic one visible with its glow, rebirth or upgrades panel open if you can.
+4. **4-win.jpg**: late game — several brainrots of different rarities on the base,
+   a Mythic/Secret one visible with its glow, rebirth or upgrades panel open if you can.
 
-Replace the three starter files in `screenshots/` with these four. Names must sort
-in this order (the first by name is the cover and the judge sees it largest).
+Replace the four files in `screenshots/` with these four. Names must sort in this
+order (the first by name is the cover and the judge sees it largest).
 
-## 4. Icon + thumbnail (Creator Dashboard)
+## 3. Thumbnail (Creator Dashboard) — THIS IS WHAT GOT v1 REJECTED
 
-1. On the Creator Dashboard, open the experience → Configurations → Places →
-   pick the start place (marked with a star) → **Icon**: upload a square picture
-   (512x512 is best) of the game — one character close-up on a bright background.
-2. **Thumbnails** (Experience Detail Page tab): upload **1-start.png** FIRST — it
-   must be the same picture as one of the screenshots in the repo. Add the other
-   screenshots after it if you like.
-3. Wait until the experience's page on Roblox shows both the icon and the thumbnail.
-   Roblox reviews each upload; the entry is refused while either is still in review
-   or blocked, so upload early and check the page shows them before submitting.
+1. On the Creator Dashboard, open the **Brainrot Bazaar** experience (the NEW one,
+   place 131988583337739) → **Thumbnails** (Experience Detail Page tab).
+2. Upload **1-start.jpg FIRST** — it must be the same picture as the first
+   screenshot in the repo. Add the other screenshots after it if you like.
+3. The icon (Blobfather) is already uploaded. Wait until the experience's page on
+   Roblox shows BOTH the icon and the thumbnail. Roblox reviews each upload; the
+   entry is refused while either is still in review or blocked, so upload early
+   and check the page shows them before submitting.
 
-## 5. Commit, push, tell the agent
+## 4. Commit, push, tell the agent
 
 ```sh
-git add PLAY.json screenshots/ game.rbxl
-git commit -m "Publish: PLAY.json + 4 real Studio screenshots"
+git add game.rbxl screenshots/
+git commit -m "v2: real Studio screenshots"
 git push
 ```
 
-Then tell the agent: the place is Public, the icon + thumbnail show on the page,
-and the commit sha. The agent will run the kit check and, on your separate gas,
-submit. **Do not submit before the thumbnail shows on the Roblox page.**
+Then tell the agent: the thumbnail shows on the Roblox page, and the commit sha.
+The agent will run the kit check and, on your separate gas, submit. **Do not submit
+before the thumbnail shows on the Roblox page.**

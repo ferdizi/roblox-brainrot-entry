@@ -1,12 +1,12 @@
--- BRAINROT BAZAAR: the client HUD.
+-- BRAINROT BAZAAR v2: the client HUD.
 -- Everything the player reads lives here, over the 3D world and clear
--- of the top-left corner where Roblox puts its own menu buttons. The
--- layout is deliberately dense, like the top games: a feature bar
--- across the top, a big wave banner, a carrying bar, a rich money
--- panel top-right, the belt list and a persistent quest panel down
--- the right edge, and action buttons with live counts along the
--- bottom. update(snapshot) is the only way the HUD changes: the
--- server sends a snapshot, this module paints it.
+-- of the top-left corner where Roblox puts its own menu buttons. Dense
+-- like the top games: a feature bar across the top, a big wave banner,
+-- a Golden Rush banner, a rich money panel top-right, the belt list
+-- and a persistent quest panel down the right edge, and action buttons
+-- with live counts along the bottom. update(snapshot) is the only way
+-- the HUD changes: the server sends a snapshot, this module paints it.
+-- v2: no lock, no slap, no carrying. Added: tutorial frame, rush banner.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
@@ -48,8 +48,6 @@ local function makeButton(parent, name, text, size, position, colour)
 	return button
 end
 
--- Rounded corners and a bright outline, the two cheap tricks that
--- make a plain dark panel read as a finished game UI.
 local function round(instance, radius)
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, radius or 8)
@@ -109,7 +107,6 @@ local function countQuestsDone(snapshot)
 	return n
 end
 
--- Build the whole HUD once. callbacks: lock, slap, rebirth, upgrade.
 function Ui.build(playerGui, callbacks)
 	Ui.callbacks = callbacks or {}
 
@@ -121,15 +118,13 @@ function Ui.build(playerGui, callbacks)
 	Ui.gui = gui
 
 	-- Feature bar, top centre: what this game is, in one line.
-	-- The counts come from Config, so they stay true if the cast grows.
-	local featureText = "BRAINROT BAZAAR · " .. tostring(#Config.Cast) .. " BRAINROTS · " .. tostring(countRarities()) .. " RARITIES · " .. tostring(#Config.Mutations) .. " MUTATIONS · STEAL · LOCK · REBIRTH"
+	local featureText = "BRAINROT BAZAAR · " .. tostring(#Config.Cast) .. " BRAINROTS · " .. tostring(countRarities()) .. " RARITIES · " .. tostring(#Config.Mutations) .. " MUTATIONS · WAVE · REBIRTH"
 	Ui.featureBar = makeLabel(gui, "FeatureBar", featureText, UDim2.new(0, 600, 0, 30), UDim2.new(0.5, -300, 0, 8), Color3.fromRGB(255, 220, 90), 15)
 	Ui.featureBar.BackgroundColor3 = Color3.fromRGB(50, 20, 90)
 	Ui.featureBar.BackgroundTransparency = 0.2
 	round(Ui.featureBar, 8)
 
 	-- Money panel, top-right, clear of Roblox's top-left menu.
-	-- Four lines now: cash, income, slots, and the rebirth multiplier.
 	local moneyPanel = Instance.new("Frame")
 	moneyPanel.Name = "MoneyPanel"
 	moneyPanel.AnchorPoint = Vector2.new(1, 0)
@@ -150,24 +145,19 @@ function Ui.build(playerGui, callbacks)
 	Ui.rebirthLabel.BackgroundTransparency = 1
 
 	-- Wave banner, top centre: the countdown the whole game watches.
-	-- ONE label, ONE line, ONE font (GothamBold, set in makeLabel),
-	-- NO UIStroke on the text: a stroke on a TextLabel outlines the
-	-- glyphs and renders as a bold/garbled double image. The banner
-	-- is single-line in every phase so nothing wraps or stacks.
+	-- ONE label, ONE line, ONE font, NO UIStroke on the text.
 	Ui.waveBanner = makeLabel(gui, "WaveBanner", "Calm seas... for now", UDim2.new(0, 520, 0, 40), UDim2.new(0.5, -260, 0, 44), Color3.fromRGB(255, 255, 255), 20)
 	Ui.waveBanner.BackgroundTransparency = 0.4
 	Ui.waveBanner.TextWrapped = false
 	round(Ui.waveBanner, 8)
 
-	-- Carrying bar, under the banner: only visible while the player
-	-- carries a stolen brainrot. Big, red, impossible to miss. The
-	-- snapshot only says whether the player is carrying, not which
-	-- brainrot, so the text stays generic.
-	Ui.alertLabel = makeLabel(gui, "Alert", "", UDim2.new(0, 560, 0, 38), UDim2.new(0.5, -280, 0, 102), Color3.fromRGB(255, 255, 255), 20)
-	Ui.alertLabel.BackgroundTransparency = 0.4
-	Ui.alertLabel.BackgroundColor3 = Color3.fromRGB(225, 25, 95)
-	Ui.alertLabel.Visible = false
-	round(Ui.alertLabel, 8)
+	-- Golden Rush banner, under the wave banner: only visible during
+	-- a rush (2x income).
+	Ui.rushBanner = makeLabel(gui, "RushBanner", "GOLDEN RUSH! 2x INCOME!", UDim2.new(0, 360, 0, 34), UDim2.new(0.5, -180, 0, 92), Color3.fromRGB(255, 220, 60), 18)
+	Ui.rushBanner.BackgroundColor3 = Color3.fromRGB(120, 80, 0)
+	Ui.rushBanner.BackgroundTransparency = 0.2
+	Ui.rushBanner.Visible = false
+	round(Ui.rushBanner, 8)
 
 	-- Belt list, right edge: what is walking, what it pays, what it costs.
 	local beltPanel = Instance.new("Frame")
@@ -190,22 +180,22 @@ function Ui.build(playerGui, callbacks)
 	Ui.beltList.Parent = beltPanel
 
 	-- Quest panel, right edge under the belt list: always visible,
-	-- the three contracts with live progress, like the top games.
+	-- the six quests with live progress.
 	local questPanel = Instance.new("Frame")
 	questPanel.Name = "QuestPanel"
 	questPanel.AnchorPoint = Vector2.new(1, 0)
 	questPanel.Position = UDim2.new(1, -12, 0, 454)
-	questPanel.Size = UDim2.new(0, 200, 0, 150)
+	questPanel.Size = UDim2.new(0, 200, 0, 234)
 	questPanel.BackgroundTransparency = 0.4
 	questPanel.BackgroundColor3 = Color3.fromRGB(30, 25, 15)
 	questPanel.Parent = gui
 	round(questPanel, 8)
 	stroke(questPanel, Color3.fromRGB(255, 210, 60), 2)
-	Ui.questTitle = makeLabel(questPanel, "Title", "QUESTS  0/3 done", UDim2.new(1, 0, 0, 26), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 220, 90), 15)
+	Ui.questTitle = makeLabel(questPanel, "Title", "QUESTS  0/6 done", UDim2.new(1, 0, 0, 26), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 220, 90), 15)
 	Ui.questTitle.BackgroundTransparency = 1
 	Ui.questRows = {}
 	for i, contract in ipairs(Config.Contracts) do
-		local row = makeLabel(questPanel, "Quest_" .. contract.id, contract.name, UDim2.new(1, -12, 0, 36), UDim2.new(0, 6, 0, 30 + (i - 1) * 38), Color3.fromRGB(255, 255, 255), 13)
+		local row = makeLabel(questPanel, "Quest_" .. contract.id, contract.name, UDim2.new(1, -12, 0, 32), UDim2.new(0, 6, 0, 28 + (i - 1) * 34), Color3.fromRGB(255, 255, 255), 12)
 		row.TextXAlignment = Enum.TextXAlignment.Left
 		Ui.questRows[contract.id] = row
 	end
@@ -215,26 +205,19 @@ function Ui.build(playerGui, callbacks)
 	bar.Name = "ActionBar"
 	bar.AnchorPoint = Vector2.new(0.5, 1)
 	bar.Position = UDim2.new(0.5, 0, 1, -12)
-	bar.Size = UDim2.new(0, 720, 0, 56)
+	bar.Size = UDim2.new(0, 640, 0, 56)
 	bar.BackgroundTransparency = 1
 	bar.Parent = gui
-	Ui.lockButton = makeButton(bar, "Lock", "LOCK BASE (L)", UDim2.new(0, 130, 1, 0), UDim2.new(0, 0, 0, 0), Color3.fromRGB(235, 40, 90))
-	Ui.slapButton = makeButton(bar, "Slap", "SLAP (F)", UDim2.new(0, 110, 1, 0), UDim2.new(0, 135, 0, 0), Color3.fromRGB(255, 140, 30))
-	Ui.rebirthButton = makeButton(bar, "Rebirth", "REBIRTH (R)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 250, 0, 0), Color3.fromRGB(170, 60, 255))
-	Ui.upgradeButton = makeButton(bar, "Upgrades", "UPGRADES (U)", UDim2.new(0, 160, 1, 0), UDim2.new(0, 405, 0, 0), Color3.fromRGB(40, 170, 255))
-	Ui.dexButton = makeButton(bar, "Dex", "DEX (B)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 570, 0, 0), Color3.fromRGB(40, 220, 120))
-	stroke(Ui.lockButton, Color3.fromRGB(255, 120, 160), 2)
-	stroke(Ui.slapButton, Color3.fromRGB(255, 190, 90), 2)
+	Ui.rebirthButton = makeButton(bar, "Rebirth", "REBIRTH (R)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 0, 0, 0), Color3.fromRGB(170, 60, 255))
+	Ui.upgradeButton = makeButton(bar, "Upgrades", "UPGRADES (U)", UDim2.new(0, 160, 1, 0), UDim2.new(0, 155, 0, 0), Color3.fromRGB(40, 170, 255))
+	Ui.dexButton = makeButton(bar, "Dex", "DEX (B)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 320, 0, 0), Color3.fromRGB(40, 220, 120))
+	Ui.questButton = makeButton(bar, "Quests", "QUESTS (C)", UDim2.new(0, 150, 1, 0), UDim2.new(0, 475, 0, 0), Color3.fromRGB(255, 180, 40))
 	stroke(Ui.rebirthButton, Color3.fromRGB(200, 140, 255), 2)
 	stroke(Ui.upgradeButton, Color3.fromRGB(120, 220, 255), 2)
 	stroke(Ui.dexButton, Color3.fromRGB(120, 255, 170), 2)
-	-- Contract button lives on the left edge, above the Dex panel.
-	Ui.contractButton = makeButton(gui, "Contracts", "CONTRACTS (C)", UDim2.new(0, 150, 0, 44), UDim2.new(0, 12, 0, 200), Color3.fromRGB(40, 220, 120))
+	stroke(Ui.questButton, Color3.fromRGB(255, 210, 120), 2)
 
-	-- Rarity legend, left edge below the Contracts button (y=252):
-	-- SMALL on purpose — one compact panel, 170 wide, six one-line
-	-- rows at TextSize 12, so it never dominates the left side.
-	-- The $/s ranges are built from Config.Cast, as before.
+	-- Rarity legend, left edge (y=252): one compact panel, six rows.
 	local legendPanel = Instance.new("Frame")
 	legendPanel.Name = "LegendPanel"
 	legendPanel.Position = UDim2.new(0, 12, 0, 252)
@@ -276,16 +259,28 @@ function Ui.build(playerGui, callbacks)
 		Ui.legendRows[rarity] = row
 	end
 
-	Ui.lockButton.MouseButton1Click:Connect(function()
-		if Ui.callbacks.lock then
-			Ui.callbacks.lock()
-		end
+	-- Tutorial frame, centre screen, shown once at start.
+	Ui.tutorial = Instance.new("Frame")
+	Ui.tutorial.Name = "Tutorial"
+	Ui.tutorial.AnchorPoint = Vector2.new(0.5, 0.5)
+	Ui.tutorial.Position = UDim2.new(0.5, 0, 0.5, 0)
+	Ui.tutorial.Size = UDim2.new(0, 420, 0, 260)
+	Ui.tutorial.BackgroundColor3 = Color3.fromRGB(20, 16, 40)
+	Ui.tutorial.BackgroundTransparency = 0.1
+	Ui.tutorial.Parent = gui
+	round(Ui.tutorial, 10)
+	stroke(Ui.tutorial, Color3.fromRGB(255, 210, 60), 3)
+	local tutTitle = makeLabel(Ui.tutorial, "Title", "HOW TO PLAY", UDim2.new(1, 0, 0, 36), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 220, 90), 22)
+	tutTitle.BackgroundTransparency = 1
+	local tutBody = makeLabel(Ui.tutorial, "Body", "1. Brainrots walk the golden belt. Hold E (or click) to BUY one.\n2. It waddles to your base and earns $ every second.\n3. When the WAVE warning sounds, RUN to your base or the cyan plaza!\n4. Buy upgrades, finish quests, REBIRTH for a permanent x1.5 boost.", UDim2.new(1, -24, 0, 150), UDim2.new(0, 12, 0, 44), Color3.fromRGB(255, 255, 255), 16)
+	tutBody.BackgroundTransparency = 1
+	tutBody.TextXAlignment = Enum.TextXAlignment.Left
+	tutBody.TextYAlignment = Enum.TextYAlignment.Top
+	local tutButton = makeButton(Ui.tutorial, "GotIt", "GOT IT! LET'S GO", UDim2.new(0, 220, 0, 44), UDim2.new(0.5, -110, 0, 200), Color3.fromRGB(40, 200, 90))
+	tutButton.MouseButton1Click:Connect(function()
+		Ui.tutorial.Visible = false
 	end)
-	Ui.slapButton.MouseButton1Click:Connect(function()
-		if Ui.callbacks.slap then
-			Ui.callbacks.slap()
-		end
-	end)
+
 	Ui.rebirthButton.MouseButton1Click:Connect(function()
 		if Ui.callbacks.rebirth then
 			Ui.callbacks.rebirth()
@@ -297,11 +292,11 @@ function Ui.build(playerGui, callbacks)
 	Ui.dexButton.MouseButton1Click:Connect(function()
 		Ui.togglePanel("dex")
 	end)
-	Ui.contractButton.MouseButton1Click:Connect(function()
+	Ui.questButton.MouseButton1Click:Connect(function()
 		Ui.togglePanel("contracts")
 	end)
 
-	-- Side panels: upgrades, BrainrotDex, contracts. One visible at most.
+	-- Side panels: upgrades, BrainrotDex, quests. One visible at most.
 	Ui.panels = {}
 	Ui.panels.upgrades = Ui.buildUpgradesPanel(gui)
 	Ui.panels.dex = Ui.buildDexPanel(gui)
@@ -323,13 +318,13 @@ function Ui.togglePanel(name)
 	Ui.currentPanel = name
 end
 
--- Upgrades panel: five upgrades, each with its next cost on the button.
+-- Upgrades panel: four upgrades, each with its next cost on the button.
 function Ui.buildUpgradesPanel(gui)
 	local panel = Instance.new("Frame")
 	panel.Name = "UpgradesPanel"
 	panel.AnchorPoint = Vector2.new(0, 1)
 	panel.Position = UDim2.new(0, 12, 1, -76)
-	panel.Size = UDim2.new(0, 240, 0, 330)
+	panel.Size = UDim2.new(0, 240, 0, 272)
 	panel.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
 	panel.BackgroundTransparency = 0.4
 	panel.Visible = false
@@ -339,7 +334,7 @@ function Ui.buildUpgradesPanel(gui)
 	Ui.upgradesTitle = makeLabel(panel, "Title", "UPGRADES", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 240, 120), 18)
 	Ui.upgradesTitle.BackgroundTransparency = 1
 	Ui.upgradeRows = {}
-	local order = { "slot", "speed", "slap", "lock", "beltSpeed" }
+	local order = { "slot", "speed", "beltSpeed", "golden" }
 	for i, kind in ipairs(order) do
 		local def = Config.Upgrades[kind]
 		local row = makeButton(panel, "Upgrade_" .. kind, def.name, UDim2.new(1, -12, 0, 52), UDim2.new(0, 6, 0, 34 + (i - 1) * 58), Color3.fromRGB(60, 120, 200))
@@ -354,8 +349,7 @@ function Ui.buildUpgradesPanel(gui)
 	return panel
 end
 
--- BrainrotDex: the whole cast, ticked once owned. A scrolling list,
--- because the cast is bigger than the panel now.
+-- BrainrotDex: the whole cast, ticked once owned. A scrolling list.
 function Ui.buildDexPanel(gui)
 	local panel = Instance.new("Frame")
 	panel.Name = "DexPanel"
@@ -387,24 +381,24 @@ function Ui.buildDexPanel(gui)
 	return panel
 end
 
--- Contract Board: three goals with live progress.
+-- Quest Board: six goals with live progress.
 function Ui.buildContractsPanel(gui)
 	local panel = Instance.new("Frame")
 	panel.Name = "ContractsPanel"
 	panel.AnchorPoint = Vector2.new(0, 1)
 	panel.Position = UDim2.new(0, 12, 1, -76)
-	panel.Size = UDim2.new(0, 240, 0, 300)
+	panel.Size = UDim2.new(0, 240, 0, 330)
 	panel.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
 	panel.BackgroundTransparency = 0.4
 	panel.Visible = false
 	panel.Parent = gui
 	round(panel, 8)
 	stroke(panel, Color3.fromRGB(255, 210, 60), 2)
-	local contractsTitle = makeLabel(panel, "Title", "CONTRACT BOARD", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 240, 120), 18)
+	local contractsTitle = makeLabel(panel, "Title", "QUEST BOARD", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, 0), Color3.fromRGB(255, 240, 120), 18)
 	contractsTitle.BackgroundTransparency = 1
 	Ui.contractRows = {}
 	for i, contract in ipairs(Config.Contracts) do
-		local row = makeLabel(panel, "Contract_" .. contract.id, contract.name, UDim2.new(1, -12, 0, 52), UDim2.new(0, 6, 0, 34 + (i - 1) * 58), Color3.fromRGB(255, 255, 255), 16)
+		local row = makeLabel(panel, "Contract_" .. contract.id, contract.name, UDim2.new(1, -12, 0, 46), UDim2.new(0, 6, 0, 34 + (i - 1) * 48), Color3.fromRGB(255, 255, 255), 15)
 		Ui.contractRows[contract.id] = row
 	end
 	return panel
@@ -416,8 +410,6 @@ function Ui.update(snapshot)
 		return
 	end
 
-	-- Money panel: cash, income, slots, and the rebirth multiplier.
-	-- The multiplier is +50% income per rebirth.
 	Ui.moneyLabel.Text = Config.formatMoney(snapshot.money)
 	Ui.incomeLabel.Text = "+" .. Config.formatMoney(snapshot.income) .. "/s"
 	Ui.slotsLabel.Text = tostring(snapshot.slotsUsed) .. "/" .. tostring(snapshot.slotsMax) .. " slots"
@@ -425,7 +417,6 @@ function Ui.update(snapshot)
 	Ui.rebirthLabel.Text = "REBIRTH " .. tostring(snapshot.rebirths) .. " · x" .. string.format("%.1f", rebirthMult)
 
 	-- The wave banner: calm, warning, or wave, with its countdown.
-	-- ONE label, ONE line in every phase — no "\n", no wrap.
 	if snapshot.wavePhase == "warning" then
 		Ui.waveBanner.Text = "BRAINROT WAVE IN " .. tostring(snapshot.waveCountdown) .. "s! RUN HOME!"
 		Ui.waveBanner.BackgroundColor3 = Color3.fromRGB(220, 30, 110)
@@ -437,9 +428,14 @@ function Ui.update(snapshot)
 		Ui.waveBanner.BackgroundColor3 = Color3.fromRGB(30, 18, 55)
 	end
 
+	-- Golden Rush banner.
+	if snapshot.goldenRush then
+		Ui.rushBanner.Visible = true
+	else
+		Ui.rushBanner.Visible = false
+	end
+
 	-- Belt list: up to eight rows, name, rarity, mutation, rate, cost.
-	-- Each row is a button: tapping it buys that brainrot, the same
-	-- buy as clicking its 3D model on the belt.
 	for _, child in ipairs(Ui.beltList:GetChildren()) do
 		child:Destroy()
 	end
@@ -454,8 +450,6 @@ function Ui.update(snapshot)
 			UDim2.new(1, -8, 0, 32),
 			UDim2.new(0, 4, 0, (i - 1) * 34)
 		)
-		-- Rarity colours the text, not the button: white-on-purple and
-		-- dark-on-yellow both read badly, one dark button does not.
 		row.TextColor3 = Config.RarityColour[entry.rarity] or Color3.fromRGB(255, 255, 255)
 		row.TextSize = 13
 		row.TextXAlignment = Enum.TextXAlignment.Left
@@ -480,7 +474,7 @@ function Ui.update(snapshot)
 		end
 	end
 
-	-- Contract progress, in the side panel and the persistent quest panel.
+	-- Quest progress, in the side panel and the persistent quest panel.
 	local questsDone = countQuestsDone(snapshot)
 	if Ui.questTitle then
 		Ui.questTitle.Text = "QUESTS  " .. tostring(questsDone) .. "/" .. tostring(#Config.Contracts) .. " done"
@@ -504,10 +498,7 @@ function Ui.update(snapshot)
 		end
 	end
 
-	-- Upgrade rows: name, level owned, and the next level's price, so
-	-- a player can tell what a button costs before tapping it. The
-	-- price comes from Config.upgradeCost, the same helper the server
-	-- charges with, so the two can never disagree.
+	-- Upgrade rows: name, level owned, and the next level's price.
 	for kind, row in pairs(Ui.upgradeRows or {}) do
 		local def = Config.Upgrades[kind]
 		local level = snapshot.upgrades and snapshot.upgrades[kind] or 0
@@ -523,30 +514,11 @@ function Ui.update(snapshot)
 		Ui.upgradesTitle.Text = "UPGRADES  " .. tostring(upgradesBought) .. "/" .. tostring(countUpgradesMax())
 	end
 
-	-- Action buttons with live counts: rebirth shows its cost, upgrades
-	-- shows total levels bought, Dex shows how many cast members are found.
+	-- Action buttons with live counts.
 	Ui.rebirthButton.Text = "REBIRTH (R) " .. Config.formatMoney(snapshot.rebirthCost)
 	Ui.upgradeButton.Text = "UPGRADES (U) " .. tostring(upgradesBought) .. "/" .. tostring(countUpgradesMax())
 	Ui.dexButton.Text = "DEX (B) " .. tostring(dexFound) .. "/" .. tostring(#Config.Cast)
-
-	-- Lock button: locked, cooling down, or ready, with its seconds.
-	local now = os.time()
-	if snapshot.lockedUntil and now < snapshot.lockedUntil then
-		Ui.lockButton.Text = "LOCKED (" .. tostring(snapshot.lockedUntil - now) .. "s)"
-	elseif snapshot.lockCooldownUntil and now < snapshot.lockCooldownUntil then
-		Ui.lockButton.Text = "LOCK IN " .. tostring(snapshot.lockCooldownUntil - now) .. "s"
-	else
-		Ui.lockButton.Text = "LOCK BASE (L)"
-	end
-
-	-- Carrying a stolen brainrot: say so, loudly, in a big red bar.
-	if snapshot.carrying then
-		Ui.alertLabel.Visible = true
-		Ui.alertLabel.Text = "CARRYING: STOLEN BRAINROT - RUN TO YOUR BASE!"
-	else
-		Ui.alertLabel.Visible = false
-		Ui.alertLabel.Text = ""
-	end
+	Ui.questButton.Text = "QUESTS (C) " .. tostring(questsDone) .. "/" .. tostring(#Config.Contracts)
 end
 
 return Ui

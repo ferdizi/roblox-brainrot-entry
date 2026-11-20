@@ -1,8 +1,10 @@
--- BRAINROT BAZAAR: the single state store.
+-- BRAINROT BAZAAR v2: the single state store.
 -- Every number the game cares about lives in this one module, on the
 -- server only. No other server script keeps its own copy of a player's
--- money, brainrots or lock: they all ask State, so the HUD, the economy
--- and the steal rules can never disagree with each other.
+-- money, brainrots or rebirths: they all ask State, so the HUD, the
+-- economy and the wave rules can never disagree with each other.
+-- v2: no stealing, no locks, no carrying. Added: Golden Touch level,
+-- Golden Rush flag, saved-data fields for the DataStore module.
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
@@ -10,8 +12,7 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local State = {}
 
 -- player -> { money, earnedTotal, rebirths, upgrades, brainrots, dex,
---   contracts, lockedUntil, lockCooldownUntil, carrying, survivedWaves,
---   baseIndex, boughtCount }
+--   contracts, contractsDone, survivedWaves, baseIndex, boughtCount }
 State.players = {}
 
 -- Live brainrots still walking the belt, by uid.
@@ -22,6 +23,9 @@ State.nextUid = 1
 State.wavePhase = "calm"
 State.waveCountdown = Config.Wave.calmSeconds
 
+-- Golden Rush bonus: while true, all income is x2.
+State.goldenRush = false
+
 -- Server-wide belt-speed bonus from beltSpeed upgrades (all players).
 State.beltSpeedBonus = 0
 
@@ -30,14 +34,11 @@ function State.newPlayerState(baseIndex)
 		money = Config.Belt.startMoney,
 		earnedTotal = 0,
 		rebirths = 0,
-		upgrades = { slot = 0, speed = 0, slap = 0, lock = 0, beltSpeed = 0 },
+		upgrades = { slot = 0, speed = 0, beltSpeed = 0, golden = 0 },
 		brainrots = {}, -- slot index -> owned brainrot table
 		dex = {}, -- cast id -> true, once ever owned
-		contracts = { buy3 = 0, earn1000 = 0, survive2 = 0 },
+		contracts = { buy3 = 0, buy10 = 0, earn1000 = 0, earn50000 = 0, survive2 = 0, dex5 = 0 },
 		contractsDone = {},
-		lockedUntil = 0,
-		lockCooldownUntil = 0,
-		carrying = nil, -- stolen brainrot being carried, or nil
 		survivedWaves = 0,
 		baseIndex = baseIndex,
 		boughtCount = 0,
@@ -72,38 +73,27 @@ function State.freeSlot(data)
 	return nil
 end
 
+-- Current income multiplier from a Golden Rush (2x) or 1x.
+function State.rushMult()
+	if State.goldenRush then
+		return Config.GoldenRush.mult
+	end
+	return 1
+end
+
 -- Total $/second across every brainrot on this player's base.
 function State.incomePerSecond(data)
 	local total = 0
 	for _, owned in pairs(data.brainrots) do
-		total += Config.incomePerSecond(owned, data.rebirths)
+		total += Config.incomePerSecond(owned, data.rebirths, data.upgrades.golden, State.rushMult())
 	end
 	return total
 end
 
--- Walk speed for a player, after upgrades and the carry penalty.
+-- Walk speed for a player, after speed upgrades.
 function State.walkSpeed(data)
 	local speed = 16 + data.upgrades.speed * Config.Upgrades.speed.speedPerLevel
-	if data.carrying ~= nil then
-		speed -= Config.Steal.carrySpeedPenalty
-	end
 	return math.max(speed, 8)
-end
-
--- Is this player's base locked right now? Wall-clock seconds, the
--- same clock lockBase writes with, so the two can never disagree.
-function State.isLocked(data)
-	return os.time() < data.lockedUntil
-end
-
--- Lock length for this player, after lock upgrades.
-function State.lockLength(data)
-	return Config.Steal.lockSeconds + data.upgrades.lock * Config.Upgrades.lock.secondsPerLevel
-end
-
--- Slap power for this player, after slap upgrades.
-function State.slapPower(data)
-	return Config.Steal.slapKnockback + data.upgrades.slap * Config.Upgrades.slap.powerPerLevel
 end
 
 -- Cost of the next level of an upgrade, or nil when maxed out.
@@ -131,6 +121,15 @@ function State.ownedCount(data)
 	return n
 end
 
+-- Count Dex entries found.
+function State.dexCount(data)
+	local n = 0
+	for _ in pairs(data.dex) do
+		n += 1
+	end
+	return n
+end
+
 -- Make a fresh belt brainrot: cast + mutation + price + uid.
 -- The uid is handed out here, once, so two brainrots can never share
 -- one even if a caller also stamps its own number on the entry.
@@ -145,11 +144,10 @@ function State.newBeltBrainrot(stormActive)
 		name = cast.name,
 		rarity = cast.rarity,
 		rate = cast.rate,
-		cost = cast.cost * mutation.mult,
+		cost = math.floor(cast.cost * mutation.mult + 0.5),
 		mutation = mutation.id,
 		mutationMult = mutation.mult,
 		colour = cast.colour,
-		hat = cast.hat,
 		blurb = cast.blurb,
 		model = nil, -- the 3D Model, set by BrainrotServer when it spawns
 		progress = 0, -- studs walked along the belt
@@ -167,7 +165,7 @@ function State.snapshotFor(player)
 		owned[slot] = {
 			name = entry.name,
 			rarity = entry.rarity,
-			rate = Config.incomePerSecond(entry, data.rebirths),
+			rate = Config.incomePerSecond(entry, data.rebirths, data.upgrades.golden, State.rushMult()),
 			mutation = entry.mutation,
 			castId = entry.castId,
 		}
@@ -205,17 +203,14 @@ function State.snapshotFor(player)
 		rebirthCost = State.rebirthCost(data),
 		slotsUsed = State.ownedCount(data),
 		slotsMax = State.slotCount(data),
-		lockedUntil = data.lockedUntil,
-		lockCooldownUntil = data.lockCooldownUntil,
-		lockLength = State.lockLength(data),
 		upgrades = data.upgrades, -- so the HUD can price the next level
-		carrying = data.carrying ~= nil,
 		owned = owned,
 		dex = data.dex,
 		contracts = data.contracts,
 		contractsDone = data.contractsDone,
 		wavePhase = State.wavePhase,
 		waveCountdown = math.ceil(State.waveCountdown),
+		goldenRush = State.goldenRush,
 		belt = belt,
 	}
 end

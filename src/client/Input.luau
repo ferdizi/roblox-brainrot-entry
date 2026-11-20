@@ -1,9 +1,9 @@
--- BRAINROT BAZAAR: keyboard shortcuts.
+-- BRAINROT BAZAAR v2: keyboard shortcuts.
 -- Bound with ContextActionService, not UserInputService.InputBegan:
 -- Roblox's default camera scripts eat the arrow keys through
 -- gameProcessedEvent, and a handler that returns on it never sees
--- them. ContextActionService bindings fire regardless, so L, F, R, U,
--- B and C always reach the game. Movement itself stays on the default
+-- them. ContextActionService bindings fire regardless, so R, U, B
+-- and C always reach the game. Movement itself stays on the default
 -- controls (WASD / arrows) and needs no binding at all.
 
 local ContextActionService = game:GetService("ContextActionService")
@@ -23,18 +23,8 @@ function Input.bindKey(actionName, keyCode, fn)
 	end, false, keyCode)
 end
 
--- The game's keys: lock, slap, rebirth, upgrades, dex, contracts.
+-- The game's keys: rebirth, upgrades, dex, quests.
 function Input.bindGameKeys(callbacks)
-	Input.bindKey("BazaarLock", Enum.KeyCode.L, function()
-		if callbacks.lock then
-			callbacks.lock()
-		end
-	end)
-	Input.bindKey("BazaarSlap", Enum.KeyCode.F, function()
-		if callbacks.slap then
-			callbacks.slap()
-		end
-	end)
 	Input.bindKey("BazaarRebirth", Enum.KeyCode.R, function()
 		if callbacks.rebirth then
 			callbacks.rebirth()

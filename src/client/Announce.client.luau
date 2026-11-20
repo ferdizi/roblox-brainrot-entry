@@ -1,10 +1,9 @@
--- BRAINROT BAZAAR: mythic/warning banner, richest leaderboard, wave shake.
--- A LocalScript: it only paints what the server announces or snapshots.
--- The mythic banner sits below the wave banner area (y ~160); the
--- RICHEST panel sits on the left edge below the rarity legend
--- (y 384..514), clear of the Roblox top-left menu, Ui's contracts
--- button (y 200..244) and the legend (y 252..376). Screen shake runs
--- only while wavePhase == "wave".
+-- BRAINROT BAZAAR v2: mythic/warning/rush banner, richest
+-- leaderboard, wave shake. A LocalScript: it only paints what the
+-- server announces or snapshots. The banner sits below the wave
+-- banner area (y ~160); the RICHEST panel sits on the left edge
+-- below the rarity legend (y 384..514). Screen shake runs only while
+-- wavePhase == "wave".
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -22,17 +21,11 @@ local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Co
 local gui = Instance.new("ScreenGui")
 gui.Name = "AnnounceGui"
 gui.ResetOnSpawn = false
--- Below the main HUD's ScreenGui, so an open side panel (upgrades /
--- Dex / contracts) draws over the RICHEST panel instead of under it.
--- The banner sits at y=160, clear of every main-HUD element.
 gui.DisplayOrder = -1
 gui.Parent = playerGui
 
 -- Big top-centre banner, below the wave banner area. ONE label, one
--- font (GothamBold), NO UIStroke on the text: a stroke on a
--- TextLabel outlines the glyphs and renders as a bold/garbled
--- double image. It never shows the wave countdown — that lives only
--- in Ui's WaveBanner — so the two can never stack.
+-- font (GothamBold), NO UIStroke on the text.
 local banner = Instance.new("TextLabel")
 banner.Name = "AnnounceBanner"
 banner.Size = UDim2.new(0, 520, 0, 40)
@@ -77,12 +70,12 @@ announce.OnClientEvent:Connect(function(data)
 		)
 	elseif data.type == "warning" then
 		showBanner("THE WAVE IS COMING — RUN HOME!", Color3.fromRGB(255, 80, 60), 3)
+	elseif data.type == "rush" then
+		showBanner("GOLDEN RUSH! 2x INCOME FOR 30 SECONDS!", Color3.fromRGB(255, 220, 60), 5)
 	end
 end)
 
 -- RICHEST leaderboard panel, left edge below the rarity legend.
--- Small on purpose (170 wide) and 40% transparent, like the rest
--- of the side panels, so the 3D world stays visible.
 local panel = Instance.new("Frame")
 panel.Name = "LeadersPanel"
 panel.Position = UDim2.new(0, 12, 0, 384)
@@ -170,4 +163,4 @@ RunService.RenderStepped:Connect(function()
 	end)
 end)
 
-print("BRAINROT BAZAAR announce client ready.")
+print("BRAINROT BAZAAR v2 announce client ready.")

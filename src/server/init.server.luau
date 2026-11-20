@@ -1,8 +1,9 @@
--- BRAINROT BAZAAR: server bootstrap.
+-- BRAINROT BAZAAR v2: server bootstrap.
 -- One script starts the game: it builds the bazaar, creates the
 -- RemoteEvents the client may use, hands each joining player a base
--- and a fresh state, and starts the belt, the stealing and the wave.
--- Nothing else runs on the server without going through here first.
+-- and a fresh state (or their saved state), and starts the belt and
+-- the wave. Nothing else runs on the server without going through
+-- here first. v2: no stealing anywhere.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,12 +11,12 @@ local SoundService = game:GetService("SoundService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("Config"))
 local State = require(script:WaitForChild("State"))
+local DataStore = require(script:WaitForChild("DataStore"))
 local WorldBuilder = require(script:WaitForChild("WorldBuilder"))
 local BrainrotServer = require(script:WaitForChild("BrainrotServer"))
-local StealServer = require(script:WaitForChild("StealServer"))
 local WaveServer = require(script:WaitForChild("WaveServer"))
 
-print("BRAINROT BAZAAR starting: building the bazaar...")
+print("BRAINROT BAZAAR v2 starting: building the bazaar...")
 
 -- The bazaar, the belt, the arch, the safe plaza and six stall-bases.
 WorldBuilder.build()
@@ -28,9 +29,6 @@ remotesFolder.Parent = ReplicatedStorage
 
 local remoteNames = {
 	"BuyBrainrot",
-	"LockBase",
-	"Slap",
-	"StealBrainrot",
 	"Rebirth",
 	"BuyUpgrade",
 	"StateSync",
@@ -57,27 +55,8 @@ end
 makeSound("MythicSound")
 makeSound("SirenSound")
 
--- Clicking a brainrot that lives on a base is a steal attempt, not a
--- buy. The belt module does not know about stealing, so the bootstrap
--- wires the two together here, with no require circle between them.
-BrainrotServer.onBaseClick = function(player, model)
-	StealServer.stealByModel(player, model)
-end
-
--- A wave that catches a thief mid-carry makes them drop the prize.
-WaveServer.onWaveDrop = function(player)
-	StealServer.dropCarried(player)
-end
-
--- A rebirth while carrying hands the stolen brainrot back first, so
--- the wipe cannot leave a carried model with nowhere to go.
-BrainrotServer.onRebirthDrop = function(player)
-	StealServer.dropCarried(player)
-end
-
 -- Bases are handed out in join order, first come first served. Past
--- eight players the ring wraps and two players share a base: the game
--- is built for eight plots, and a ninth player still gets to play.
+-- six players the ring wraps and two players share a base.
 local nextBase = 1
 
 local function onPlayerAdded(player)
@@ -87,12 +66,25 @@ local function onPlayerAdded(player)
 		nextBase = 1
 	end
 	State.addPlayer(player, baseIndex)
-	StealServer.applyWalkSpeed(player)
+	local data = State.get(player)
+
+	-- Load the save (pcall-wrapped inside; nil when there is none),
+	-- then rebuild the saved brainrots onto their base slots.
+	local savedBrainrots = DataStore.load(player, data)
+	if savedBrainrots then
+		BrainrotServer.restoreBrainrots(player, savedBrainrots)
+	end
 
 	-- Keep the walk speed right after every respawn.
 	player.CharacterAdded:Connect(function(_character)
 		task.wait(0.5)
-		StealServer.applyWalkSpeed(player)
+		local character = player.Character
+		if character then
+			local humanoid = character:FindFirstChildOfClass("Humanoid")
+			if humanoid then
+				humanoid.WalkSpeed = State.walkSpeed(data)
+			end
+		end
 	end)
 
 	-- A first snapshot right away, so the HUD is never empty.
@@ -101,15 +93,12 @@ local function onPlayerAdded(player)
 	if snapshot then
 		remotes.StateSync:FireClient(player, snapshot)
 	end
-	print(player.Name .. " joined BRAINROT BAZAAR on base " .. tostring(baseIndex))
+	print(player.Name .. " joined BRAINROT BAZAAR v2 on base " .. tostring(baseIndex))
 end
 
 local function onPlayerRemoving(player)
-	local data = State.get(player)
-	if data and data.carrying then
-		-- A thief who leaves drops the prize back where it came from.
-		StealServer.dropCarried(player)
-	end
+	-- Save before the state is dropped (pcall-wrapped inside).
+	DataStore.save(player)
 	State.removePlayer(player)
 end
 
@@ -119,9 +108,16 @@ for _, player in ipairs(Players:GetPlayers()) do
 	task.spawn(onPlayerAdded, player)
 end
 
--- Start the three systems that run the game.
+-- Start the systems that run the game.
 BrainrotServer.start(remotes)
-StealServer.start(remotes)
 WaveServer.start(remotes)
 
-print("BRAINROT BAZAAR live: belt, bases, stealing and wave running.")
+-- Autosave every 60 seconds (pcall-wrapped inside DataStore).
+task.spawn(function()
+	while true do
+		task.wait(60)
+		DataStore.saveAll()
+	end
+end)
+
+print("BRAINROT BAZAAR v2 live: belt, bases, wave, golden rush running.")

@@ -1,10 +1,13 @@
--- BRAINROT BAZAAR: the wave.
+-- BRAINROT BAZAAR v2: the wave + the Golden Rush.
 -- The clock the whole server lives by. A cycle of calm, warning and
 -- wave, about every ninety seconds. The warning is the interesting
 -- part: Glitch-mutation brainrots only roll while it is live, so the
 -- bravest players stay on the belt while everyone else runs for a
 -- base or the safe plaza. The wave itself sweeps the belt clean and
 -- knocks anyone caught in the open back, costing them a slice of cash.
+-- The wave is the ONLY threat. Separately, a Golden Rush pays 2x
+-- income for 30 seconds every ~2.5 minutes: the reward that keeps
+-- players watching the timer. v2: no stealing hooks anywhere.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -18,8 +21,6 @@ local WorldBuilder = require(script.Parent:WaitForChild("WorldBuilder"))
 local WaveServer = {}
 WaveServer.remotes = nil
 
--- Play a SoundService sound by name; pcall-guarded so a sound that
--- fails to load never errors the wave loop.
 local function playSound(name)
 	pcall(function()
 		local sound = SoundService:FindFirstChild(name)
@@ -47,11 +48,10 @@ local function isSafePosition(player, position)
 	return false
 end
 
--- The wave wall: a giant hot-pink GOO/SAUCE wall (Neon, slightly
+-- The wave wall: a giant hot-pink GOO wall (Neon, slightly
 -- transparent) with 3 drip spheres hanging off its bottom edge, that
 -- sweeps the belt from the west end to the east end, washing the
--- belt clean. Its path comes from Config.Belt, the same numbers the
--- belt itself uses.
+-- belt clean.
 function WaveServer.runWaveWall()
 	local wall = Instance.new("Part")
 	wall.Name = "GooWall"
@@ -64,7 +64,6 @@ function WaveServer.runWaveWall()
 	wall.CanCollide = false
 	wall.Parent = workspace
 
-	-- Drip spheres off the bottom edge (uniform Ball sizes).
 	local dripSpecs = { { -20, 5 }, { 0, 4 }, { 20, 3 } }
 	local drips = {}
 	for _, spec in ipairs(dripSpecs) do
@@ -108,7 +107,6 @@ end
 -- back anyone caught in the open, and count a survived wave for the
 -- players who were safe.
 function WaveServer.strikeWave()
-	-- Wash the belt clean.
 	local uids = {}
 	for _, entry in ipairs(State.belt) do
 		table.insert(uids, entry.uid)
@@ -128,28 +126,15 @@ function WaveServer.strikeWave()
 					data.contracts.survive2 = data.survivedWaves
 					BrainrotServer.checkContracts(player)
 				else
-					-- Caught in the open: thrown back and fined 10% of cash.
-					-- The push is horizontal, away from the bazaar centre;
-					-- a player standing on the centre line gets pushed
-					-- south instead of a zero-length direction erroring.
 					local flat = Vector3.new(root.Position.X, 0, root.Position.Z)
 					local away = flat.Magnitude > 1 and flat.Unit or Vector3.new(0, 0, 1)
 					root.AssemblyLinearVelocity = away * 30 + Vector3.new(0, 18, 0)
 					data.money = math.floor(data.money * (1 - Config.Wave.knockbackCashLoss))
-					-- A thief caught by the wave drops what they were carrying.
-					if data.carrying and WaveServer.onWaveDrop then
-						WaveServer.onWaveDrop(player)
-					end
 				end
 			end
 		end
 	end
 end
-
--- Hook set by init.server: what the wave does to a carried brainrot.
--- Kept as a hook (not a require) so this module and StealServer never
--- require each other in a circle.
-WaveServer.onWaveDrop = nil
 
 -- Reviewer shortcut, used by TOUR.json only: jump the calm straight
 -- to its warning, so a reviewer can reach the wave screen without
@@ -159,7 +144,6 @@ function WaveServer.skipToWarning(_arg)
 	WaveServer.skipRequested = true
 end
 
--- Announce the phase to every client through the state snapshots.
 local function setPhase(phase, countdown)
 	State.wavePhase = phase
 	State.waveCountdown = countdown
@@ -200,9 +184,26 @@ function WaveServer.startLoop()
 	end)
 end
 
+-- Golden Rush loop: 2x income for 30s every ~2.5 minutes.
+function WaveServer.startGoldenRush()
+	task.spawn(function()
+		while true do
+			task.wait(Config.GoldenRush.everySeconds)
+			State.goldenRush = true
+			if WaveServer.remotes and WaveServer.remotes.Announce then
+				WaveServer.remotes.Announce:FireAllClients({ type = "rush" })
+			end
+			playSound("MythicSound")
+			task.wait(Config.GoldenRush.durationSeconds)
+			State.goldenRush = false
+		end
+	end)
+end
+
 function WaveServer.start(remotes)
 	WaveServer.remotes = remotes
 	WaveServer.startLoop()
+	WaveServer.startGoldenRush()
 end
 
 return WaveServer
